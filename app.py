@@ -235,6 +235,55 @@ def create_post():
     
     return render_template('blog/create_post.html', form=form)
 
+@app.route('/edit_post/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_post(id):
+    post = Post.query.get_or_404(id)
+    
+    # Check if the current user is the author or admin
+    if current_user.id != post.user_id and not current_user.is_admin:
+        flash('You do not have permission to edit this post.', 'error')
+        return redirect(url_for('post_detail', id=id))
+    
+    form = PostForm()
+    
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        post.is_published = form.is_published.data
+        post.updated_at = datetime.utcnow()
+        db.session.commit()
+        flash('Post updated successfully!', 'success')
+        return redirect(url_for('post_detail', id=id))
+    
+    # Pre-populate form with existing data
+    if request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+        form.is_published.data = post.is_published
+    
+    return render_template('blog/edit_post.html', form=form, post=post)
+
+@app.route('/delete_post/<int:id>', methods=['POST'])
+@login_required
+def delete_post(id):
+    post = Post.query.get_or_404(id)
+    
+    # Check if the current user is the author or admin
+    if current_user.id != post.user_id and not current_user.is_admin:
+        flash('You do not have permission to delete this post.', 'error')
+        return redirect(url_for('post_detail', id=id))
+    
+    # Store post title for flash message
+    post_title = post.title
+    
+    # Delete the post
+    db.session.delete(post)
+    db.session.commit()
+    
+    flash(f'Post "{post_title}" has been deleted successfully!', 'success')
+    return redirect(url_for('posts'))
+
 @app.route('/about')
 def about():
     return render_template('about.html')
