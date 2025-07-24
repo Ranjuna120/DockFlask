@@ -1,35 +1,269 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_migrate import Migrate
 import os
+import webbrowser
+import threading
+import time
 from datetime import datetime
+from config import config
+from models import db, User, Post, SystemLog
+from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm
 
-app = Flask(__name__)
+def create_app(config_name=None):
+    app = Flask(__name__)
+    
+    # Configuration
+    config_name = config_name or os.getenv('FLASK_ENV', 'default')
+    app.config.from_object(config[config_name])
+    
+    # Initialize extensions
+    db.init_app(app)
+    migrate = Migrate(app, db)
+    
+    # Login Manager
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+    login_manager.login_message = 'Please log in to access this page.'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    # Log system actions
+    def log_action(action, details=None):
+        try:
+            log = SystemLog(
+                action=action,
+                user_id=current_user.id if current_user.is_authenticated else None,
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent'),
+                details=details
+            )
+            db.session.add(log)
+            db.session.commit()
+        except:
+            pass
+    
+    return app, login_manager
 
+app, login_manager = create_app()
+
+# Routes
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # Get recent posts
+    recent_posts = Post.query.filter_by(is_published=True).order_by(Post.created_at.desc()).limit(5).all()
+    total_users = User.query.count()
+    total_posts = Post.query.filter_by(is_published=True).count()
+    
+    return render_template('index.html', 
+                         recent_posts=recent_posts,
+                         total_users=total_users,
+                         total_posts=total_posts)
 
 @app.route('/api/health')
 def health_check():
+    try:
+        # Check database connection
+        db_status = "connected"
+        user_count = User.query.count()
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+        user_count = 0
+    
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'message': 'Flask app is running successfully!'
+        'message': 'Flask app is running successfully!',
+        'database': db_status,
+        'users_count': user_count,
+        'authenticated_user': current_user.username if current_user.is_authenticated else None
     })
 
 @app.route('/api/info')
 def app_info():
     return jsonify({
         'app_name': 'DockFlask',
-        'version': '1.0.0',
+        'version': '2.0.0',
         'environment': os.getenv('FLASK_ENV', 'production'),
-        'python_version': '3.11'
+        'python_version': '3.11',
+        'database': 'MySQL' if 'mysql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite',
+        'features': ['User Management', 'Authentication', 'Blog Posts', 'Admin Panel']
     })
+
+# Authentication Routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            flash(f'Welcome back, {user.first_name}!', 'success')
+            
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        flash('Invalid username or password', 'error')
+    
+    return render_template('auth/login.html', form=form)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data
+        )
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful!', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('auth/register.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('home'))
+
+# Dashboard Routes
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    user_posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.created_at.desc()).all()
+    recent_activity = SystemLog.query.filter_by(user_id=current_user.id).order_by(SystemLog.timestamp.desc()).limit(10).all()
+    
+    stats = {
+        'total_posts': len(user_posts),
+        'published_posts': len([p for p in user_posts if p.is_published]),
+        'total_views': sum(p.views for p in user_posts),
+        'recent_posts': user_posts[:5]
+    }
+    
+    return render_template('dashboard/index.html', stats=stats, recent_activity=recent_activity)
+
+# Blog Routes
+@app.route('/posts')
+def posts():
+    page = request.args.get('page', 1, type=int)
+    try:
+        posts_query = Post.query.filter_by(is_published=True).order_by(Post.created_at.desc())
+        posts_list = posts_query.limit(10).offset((page - 1) * 10).all()
+        total_posts = posts_query.count()
+        
+        # Simple pagination object
+        class SimplePagination:
+            def __init__(self, items, page, per_page, total):
+                self.items = items
+                self.page = page
+                self.per_page = per_page
+                self.total = total
+                self.pages = (total - 1) // per_page + 1
+                self.has_prev = page > 1
+                self.has_next = page < self.pages
+                self.prev_num = page - 1 if self.has_prev else None
+                self.next_num = page + 1 if self.has_next else None
+        
+        pagination = SimplePagination(posts_list, page, 10, total_posts)
+        return render_template('blog/posts.html', posts=posts_list, pagination=pagination)
+    except Exception as e:
+        print(f"Posts route error: {e}")
+        posts_list = Post.query.filter_by(is_published=True).order_by(Post.created_at.desc()).limit(10).all()
+        return render_template('blog/posts.html', posts=posts_list, pagination=None)
+
+@app.route('/post/<int:id>')
+def post_detail(id):
+    post = Post.query.get_or_404(id)
+    if not post.is_published and (not current_user.is_authenticated or current_user.id != post.user_id):
+        return redirect(url_for('posts'))
+    
+    # Increment views
+    post.views += 1
+    db.session.commit()
+    
+    return render_template('blog/post_detail.html', post=post)
+
+@app.route('/create_post', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(
+            title=form.title.data,
+            content=form.content.data,
+            is_published=form.is_published.data,
+            user_id=current_user.id
+        )
+        db.session.add(post)
+        db.session.commit()
+        flash('Post created successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('blog/create_post.html', form=form)
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
+# API Routes and other routes continue here...
+
+def open_browser():
+    """Open the default browser to the Flask app URL after a short delay"""
+    time.sleep(1.5)  # Wait for Flask server to start
+    webbrowser.open('http://127.0.0.1:5000')
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    debug = os.getenv('FLASK_ENV') == 'development'
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    debug = True  # Always enable debug mode for development
+    
+    with app.app_context():
+        db.create_all()
+        
+        # Create admin user if not exists
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(
+                username='admin',
+                email='admin@dockflask.com',
+                first_name='Admin',
+                last_name='User',
+                is_admin=True
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin user created: username=admin, password=admin123")
+    
+    print("🚀 Starting Flask app with auto-reload enabled...")
+    print("🔄 Files will be automatically reloaded when changed")
+    print("🌐 Access your app at: http://127.0.0.1:5000")
+    print("🌍 Opening browser automatically...")
+    
+    # Start browser in a separate thread
+    if os.getenv('WERKZEUG_RUN_MAIN') != 'true':  # Only open browser on main process
+        threading.Thread(target=open_browser, daemon=True).start()
+    
+    app.run(
+        host='0.0.0.0', 
+        port=port, 
+        debug=True,           # Enable debug mode
+        use_reloader=True,    # Enable auto-reload
+        use_debugger=True,    # Enable debugger
+        threaded=True         # Enable threading
+    )
