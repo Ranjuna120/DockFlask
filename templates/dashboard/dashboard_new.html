@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block title %}Dashboard - DockFlask{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header fade-in">
+            <div class="dashboard-welcome">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ current_user.first_name[0] if current_user.first_name else 'U' }}
+                    </div>
+                    <div class="user-details">
+                        <h3>Welcome back, {{ current_user.first_name }}!</h3>
+                        <p>{{ current_user.email }}</p>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="dashboard-title">Dashboard</h1>
+                    <p class="dashboard-subtitle">Manage your content and explore analytics</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid slide-up">
+            <div class="stat-card posts">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <span class="stat-number">{{ stats.total_posts or 0 }}</span>
+                <div class="stat-label">Total Posts</div>
+            </div>
+            
+            <div class="stat-card users">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <span class="stat-number">{{ stats.total_users or 1 }}</span>
+                <div class="stat-label">Total Users</div>
+            </div>
+            
+            <div class="stat-card views">
+                <div class="stat-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <span class="stat-number">{{ stats.total_views or 0 }}</span>
+                <div class="stat-label">Total Views</div>
+            </div>
+            
+            <div class="stat-card comments">
+                <div class="stat-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <span class="stat-number">{{ stats.total_comments or 0 }}</span>
+                <div class="stat-label">Comments</div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="action-grid slide-up">
+            <div class="action-card create">
+                <div class="action-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h3 class="action-title">Create New Post</h3>
+                <p class="action-description">Share your thoughts and ideas with the community. Create engaging content with our easy-to-use editor.</p>
+                <a href="{{ url_for('create_post') }}" class="action-button">
+                    <i class="fas fa-pen"></i>
+                    Write Post
+                </a>
+            </div>
+
+            <div class="action-card manage">
+                <div class="action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3 class="action-title">Manage Posts</h3>
+                <p class="action-description">Edit, update, or delete your existing posts. Keep your content fresh and engaging.</p>
+                <a href="{{ url_for('posts') }}" class="action-button">
+                    <i class="fas fa-list"></i>
+                    View Posts
+                </a>
+            </div>
+
+            <div class="action-card analytics">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 class="action-title">Analytics</h3>
+                <p class="action-description">Track your content performance and understand your audience better with detailed analytics.</p>
+                <a href="#" class="action-button">
+                    <i class="fas fa-analytics"></i>
+                    View Stats
+                </a>
+            </div>
+
+            <div class="action-card settings">
+                <div class="action-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <h3 class="action-title">Profile Settings</h3>
+                <p class="action-description">Update your profile information, change password, and customize your account settings.</p>
+                <a href="#" class="action-button">
+                    <i class="fas fa-edit"></i>
+                    Edit Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity slide-up">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-clock" style="color: #667eea; margin-right: 0.5rem;"></i>
+                    Recent Activity
+                </h3>
+            </div>
+            
+            <ul class="activity-list">
+                <li class="activity-item">
+                    <div class="activity-icon" style="--activity-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">You joined DockFlask</div>
+                        <div class="activity-time">Welcome to the community!</div>
+                    </div>
+                </li>
+                
+                <li class="activity-item">
+                    <div class="activity-icon" style="--activity-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Profile created successfully</div>
+                        <div class="activity-time">Your account is ready to use</div>
+                    </div>
+                </li>
+                
+                <li class="activity-item">
+                    <div class="activity-icon" style="--activity-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Explore the dashboard</div>
+                        <div class="activity-time">Start creating amazing content!</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Quick Actions Bar -->
+        <div class="quick-stats slide-up">
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ current_user.created_at.strftime('%B %Y') if current_user.created_at else 'Recently' }}</div>
+                <div class="quick-stat-label">Member Since</div>
+                <div style="--stat-gradient: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"></div>
+            </div>
+            
+            <div class="quick-stat">
+                <div class="quick-stat-value">Active</div>
+                <div class="quick-stat-label">Account Status</div>
+                <div style="--stat-gradient: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);"></div>
+            </div>
+            
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ current_user.role.title() if current_user.role else 'User' }}</div>
+                <div class="quick-stat-label">Role</div>
+                <div style="--stat-gradient: linear-gradient(90deg, #fa709a 0%, #fee140 100%);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add some JavaScript for animations -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation classes to elements
+    const elements = document.querySelectorAll('.slide-up');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Add hover effects to stat cards
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}
