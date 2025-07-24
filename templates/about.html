@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}About - DockFlask{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="mb-4">About DockFlask</h1>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">🚀 Project Overview</h5>
+                <p class="card-text">
+                    DockFlask is a modern Python Flask web application designed to demonstrate best practices 
+                    in containerized web development. This project showcases how to build, package, and deploy 
+                    a Flask application using Docker.
+                </p>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">🛠️ Technologies Used</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Python 3.11</strong> - Modern Python runtime</li>
+                    <li class="list-group-item"><strong>Flask 2.3.3</strong> - Lightweight web framework</li>
+                    <li class="list-group-item"><strong>Gunicorn</strong> - Production WSGI server</li>
+                    <li class="list-group-item"><strong>Docker</strong> - Containerization platform</li>
+                    <li class="list-group-item"><strong>Bootstrap 5</strong> - Frontend framework</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">✨ Features</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">✅ RESTful API endpoints</li>
+                    <li class="list-group-item">✅ Health check monitoring</li>
+                    <li class="list-group-item">✅ Docker containerization</li>
+                    <li class="list-group-item">✅ Production-ready configuration</li>
+                    <li class="list-group-item">✅ Development environment support</li>
+                    <li class="list-group-item">✅ Responsive web interface</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">🔧 Quick Start</h5>
+                <pre class="bg-light p-3 rounded"><code># Clone the repository
+git clone &lt;your-repo-url&gt;
+cd DockFlask
+
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or run in development mode
+docker-compose --profile dev up --build</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
