@@ -2,63 +2,507 @@
 
 {% block title %}About - DockFlask{% endblock %}
 
+{% block additional_css %}
+<style>
+.about-hero {
+    background: linear-gradient(135deg, var(--primary-gradient));
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+    border-radius: 0 0 2rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.about-hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.about-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.about-hero .lead {
+    font-size: 1.25rem;
+    color: rgba(255,255,255,0.9);
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover::before {
+    transform: scaleX(1);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.feature-title {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.feature-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.tech-stack {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+
+.tech-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.tech-item:hover {
+    background: var(--card-hover);
+}
+
+.tech-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.tech-python { background: linear-gradient(135deg, #3776ab, #ffd43b); }
+.tech-flask { background: linear-gradient(135deg, #000000, #ffffff); }
+.tech-docker { background: linear-gradient(135deg, #0db7ed, #2496ed); }
+.tech-mysql { background: linear-gradient(135deg, #00758f, #f29111); }
+.tech-bootstrap { background: linear-gradient(135deg, #7952b3, #563d7c); }
+
+.quick-start {
+    background: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    color: #f0f6fc;
+    overflow-x: auto;
+    position: relative;
+}
+
+.code-block::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(90deg, #ff5f56, #ffbd2e, #27ca3f);
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.code-block code {
+    display: block;
+    margin-top: 30px;
+    line-height: 1.6;
+}
+
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.fade-in-up:nth-child(2) { animation-delay: 0.1s; }
+.fade-in-up:nth-child(3) { animation-delay: 0.2s; }
+.fade-in-up:nth-child(4) { animation-delay: 0.3s; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <h1 class="mb-4">About DockFlask</h1>
-        
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">🚀 Project Overview</h5>
-                <p class="card-text">
-                    DockFlask is a modern Python Flask web application designed to demonstrate best practices 
-                    in containerized web development. This project showcases how to build, package, and deploy 
-                    a Flask application using Docker.
-                </p>
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">🛠️ Technologies Used</h5>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Python 3.11</strong> - Modern Python runtime</li>
-                    <li class="list-group-item"><strong>Flask 2.3.3</strong> - Lightweight web framework</li>
-                    <li class="list-group-item"><strong>Gunicorn</strong> - Production WSGI server</li>
-                    <li class="list-group-item"><strong>Docker</strong> - Containerization platform</li>
-                    <li class="list-group-item"><strong>Bootstrap 5</strong> - Frontend framework</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">✨ Features</h5>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">✅ RESTful API endpoints</li>
-                    <li class="list-group-item">✅ Health check monitoring</li>
-                    <li class="list-group-item">✅ Docker containerization</li>
-                    <li class="list-group-item">✅ Production-ready configuration</li>
-                    <li class="list-group-item">✅ Development environment support</li>
-                    <li class="list-group-item">✅ Responsive web interface</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">🔧 Quick Start</h5>
-                <pre class="bg-light p-3 rounded"><code># Clone the repository
-git clone &lt;your-repo-url&gt;
-cd DockFlask
-
-# Build and run with Docker Compose
-docker-compose up --build
-
-# Or run in development mode
-docker-compose --profile dev up --build</code></pre>
+<!-- Hero Section -->
+<div class="about-hero">
+    <div class="container">
+        <div class="about-hero-content">
+            <h1>🚀 DockFlask Pro</h1>
+            <p class="lead">
+                A modern, containerized Flask application showcasing best practices in web development, 
+                featuring user authentication, blog functionality, and a beautiful dark theme interface.
+            </p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('home') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-home me-2"></i>Home
+                </a>
+                <a href="{{ url_for('posts') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-blog me-2"></i>Blog Posts
+                </a>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container-fluid">
+    <!-- Stats Section -->
+    <div class="stats-section fade-in-up">
+        <div class="stat-card">
+            <div class="stat-number">{{ general_stats.total_users if general_stats else '2' }}+</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ general_stats.total_posts if general_stats else '4' }}+</div>
+            <div class="stat-label">Blog Posts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">99%</div>
+            <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Support</div>
+        </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="feature-grid fade-in-up">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="feature-title">User Management</h3>
+            <p class="feature-description">
+                Complete user authentication system with registration, login, password hashing, 
+                and session management using Flask-Login and bcrypt for security.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-blog"></i>
+            </div>
+            <h3 class="feature-title">Blog System</h3>
+            <p class="feature-description">
+                Full-featured blogging platform with post creation, editing, publishing, 
+                view tracking, and search functionality with a modern, responsive interface.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <h3 class="feature-title">MySQL Integration</h3>
+            <p class="feature-description">
+                Robust database integration with MySQL using SQLAlchemy ORM, migrations, 
+                foreign keys, indexes, and optimized queries for performance.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-paint-brush"></i>
+            </div>
+            <h3 class="feature-title">Modern UI/UX</h3>
+            <p class="feature-description">
+                Beautiful dark theme interface with gradient designs, smooth animations, 
+                responsive layout, and intuitive user experience across all devices.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="feature-title">Security First</h3>
+            <p class="feature-description">
+                Built with security best practices including password hashing, CSRF protection, 
+                secure session management, and input validation throughout the application.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-api"></i>
+            </div>
+            <h3 class="feature-title">REST API</h3>
+            <p class="feature-description">
+                RESTful API endpoints for health monitoring, application information, 
+                and data access with JSON responses and proper HTTP status codes.
+            </p>
+        </div>
+    </div>
+
+    <!-- Technology Stack -->
+    <div class="tech-stack fade-in-up">
+        <h2 class="section-title text-center mb-4">
+            <i class="fas fa-cogs me-2"></i>Technology Stack
+        </h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="tech-item">
+                    <div class="tech-icon tech-python">
+                        <i class="fab fa-python"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">Python 3.12</h5>
+                        <small style="color: var(--text-secondary);">Modern Python runtime with latest features</small>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon tech-flask">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">Flask 2.3.3</h5>
+                        <small style="color: var(--text-secondary);">Lightweight and flexible web framework</small>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon tech-mysql">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">MySQL Database</h5>
+                        <small style="color: var(--text-secondary);">Reliable relational database with SQLAlchemy ORM</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="tech-item">
+                    <div class="tech-icon tech-docker">
+                        <i class="fab fa-docker"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">Docker</h5>
+                        <small style="color: var(--text-secondary);">Containerization for consistent deployments</small>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon tech-bootstrap">
+                        <i class="fab fa-bootstrap"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">Bootstrap 5</h5>
+                        <small style="color: var(--text-secondary);">Responsive frontend framework with custom theming</small>
+                    </div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon" style="background: linear-gradient(135deg, #ff6b6b, #4ecdc4);">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" style="color: var(--text-primary);">Modern CSS</h5>
+                        <small style="color: var(--text-secondary);">Custom CSS variables, gradients, and animations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start Guide -->
+    <div class="quick-start fade-in-up">
+        <h2 class="section-title text-center mb-4">
+            <i class="fas fa-rocket me-2"></i>Quick Start Guide
+        </h2>
+        <div class="row">
+            <div class="col-lg-6">
+                <h4 class="mb-3" style="color: var(--text-primary);">🐳 Docker Method (Recommended)</h4>
+                <div class="code-block">
+                    <code># Clone the repository
+git clone https://github.com/Ranjuna120/DockFlask.git
+cd DockFlask
+
+# Build and run with Docker
+docker-compose up --build
+
+# Access the application
+# http://localhost:5000</code>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h4 class="mb-3" style="color: var(--text-primary);">🐍 Local Development</h4>
+                <div class="code-block">
+                    <code># Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python app.py</code>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <h5 style="color: var(--text-primary);">Default Admin Credentials</h5>
+            <div class="d-inline-block bg-dark p-3 rounded border">
+                <strong style="color: #4facfe;">Username:</strong> <span style="color: white;">admin</span><br>
+                <strong style="color: #4facfe;">Password:</strong> <span style="color: white;">admin123</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add intersection observer for animations
+document.addEventListener('DOMContentLoaded', function() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll('.fade-in-up').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'all 0.6s ease-out';
+        observer.observe(el);
+    });
+
+    // Add hover effects to feature cards
+    document.querySelectorAll('.feature-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
 {% endblock %}
