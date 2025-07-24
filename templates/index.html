@@ -55,8 +55,42 @@
             </div>
         </div>
 
-        <!-- Statistics Section -->
-        {% if current_user.is_authenticated %}
+        <!-- General Platform Statistics -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card glass slide-up">
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">
+                            <i class="fas fa-chart-bar text-success"></i>
+                            Platform Statistics
+                        </h3>
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="stat-item">
+                                    <h2 class="text-primary">{{ general_stats.total_users or 0 }}</h2>
+                                    <p class="stat-label">Total Users</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-item">
+                                    <h2 class="text-success">{{ general_stats.total_posts or 0 }}</h2>
+                                    <p class="stat-label">Published Posts</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-item">
+                                    <h2 class="text-info">{{ general_stats.total_views or 0 }}</h2>
+                                    <p class="stat-label">Total Views</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Activity Overview (Only for authenticated users) -->
+        {% if current_user.is_authenticated and user_stats %}
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card glass slide-up">
@@ -68,26 +102,26 @@
                         <div class="row text-center">
                             <div class="col-md-3">
                                 <div class="stat-item">
-                                    <h2 class="text-primary">{{ stats.user_posts or 0 }}</h2>
-                                    <p class="text-muted">Your Posts</p>
+                                    <h2 class="text-primary">{{ user_stats.user_posts or 0 }}</h2>
+                                    <p class="stat-label">Your Posts</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="stat-item">
-                                    <h2 class="text-success">{{ stats.user_views or 0 }}</h2>
-                                    <p class="text-muted">Post Views</p>
+                                    <h2 class="text-success">{{ user_stats.user_views or 0 }}</h2>
+                                    <p class="stat-label">Post Views</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="stat-item">
-                                    <h2 class="text-info">{{ stats.user_comments or 0 }}</h2>
-                                    <p class="text-muted">Comments</p>
+                                    <h2 class="text-info">{{ user_stats.user_comments or 0 }}</h2>
+                                    <p class="stat-label">Comments</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="stat-item">
-                                    <h2 class="text-warning">{{ current_user.created_at.strftime('%d') if current_user.created_at else '1' }}</h2>
-                                    <p class="text-muted">Days Active</p>
+                                    <h2 class="text-warning">{{ user_stats.days_active or 1 }}</h2>
+                                    <p class="stat-label">Days Active</p>
                                 </div>
                             </div>
                         </div>
@@ -162,46 +196,54 @@
         </div>
         {% endif %}
 
-        <!-- API Endpoints Section -->
+        <!-- API Endpoints Section (Collapsible) -->
         <div class="row mb-5" id="api-section">
             <div class="col-12">
-                <h2 class="text-center mb-4">API Endpoints</h2>
-            </div>
-            <div class="col-12">
                 <div class="card glass slide-up">
-                    <div class="card-body">
-                        <div class="api-endpoint">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="api-method get">GET</span>
-                                <code class="api-path">/api/health</code>
-                                <span class="ms-auto text-muted">Health check endpoint</span>
+                    <div class="card-header" style="background: transparent; border: none;">
+                        <h4 class="text-center mb-0">
+                            <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#apiContent" aria-expanded="false">
+                                <i class="fas fa-code me-2"></i>
+                                API Endpoints 
+                                <i class="fas fa-chevron-down ms-2"></i>
+                            </button>
+                        </h4>
+                    </div>
+                    <div class="collapse" id="apiContent">
+                        <div class="card-body">
+                            <div class="api-endpoint">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="api-method get">GET</span>
+                                    <code class="api-path">/api/health</code>
+                                    <span class="ms-auto text-muted">Health check endpoint</span>
+                                </div>
+                                <p class="text-muted mb-0">Returns the application health status and basic information.</p>
                             </div>
-                            <p class="text-muted mb-0">Returns the application health status and basic information.</p>
-                        </div>
-                        
-                        <div class="api-endpoint">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="api-method get">GET</span>
-                                <code class="api-path">/api/info</code>
-                                <span class="ms-auto text-muted">Application information</span>
+                            
+                            <div class="api-endpoint">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="api-method get">GET</span>
+                                    <code class="api-path">/api/info</code>
+                                    <span class="ms-auto text-muted">Application information</span>
+                                </div>
+                                <p class="text-muted mb-0">Provides detailed application information and configuration.</p>
                             </div>
-                            <p class="text-muted mb-0">Provides detailed application information and configuration.</p>
+                            
+                            <!-- Test Buttons -->
+                            <div class="text-center mt-4">
+                                <h5 class="mb-3">Test API Endpoints</h5>
+                                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                    <button class="btn btn-success btn-sm" onclick="testHealthCheck()">
+                                        <i class="fas fa-heartbeat"></i> Test Health Check
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="testAppInfo()">
+                                        <i class="fas fa-info-circle"></i> Test App Info
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Test Buttons -->
-        <div class="text-center mb-5 slide-up">
-            <h3 class="mb-4">Test API Endpoints</h3>
-            <div class="d-flex gap-3 justify-content-center flex-wrap">
-                <button class="btn btn-success" onclick="testHealthCheck()">
-                    <i class="fas fa-heartbeat"></i> Test Health Check
-                </button>
-                <button class="btn btn-info" onclick="testAppInfo()">
-                    <i class="fas fa-info-circle"></i> Get App Info
-                </button>
             </div>
         </div>
     </div>
