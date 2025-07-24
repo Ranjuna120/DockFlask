@@ -29,7 +29,7 @@ def create_app(config_name=None):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     
     # Log system actions
     def log_action(action, details=None):
@@ -58,10 +58,28 @@ def home():
     total_users = User.query.count()
     total_posts = Post.query.filter_by(is_published=True).count()
     
+    # Create general stats for all users
+    general_stats = {
+        'total_users': total_users,
+        'total_posts': total_posts,
+        'total_views': sum(post.views for post in recent_posts) if recent_posts else 0
+    }
+    
+    # Create user-specific stats if authenticated
+    user_stats = None
+    if current_user.is_authenticated:
+        user_posts = Post.query.filter_by(user_id=current_user.id).all()
+        user_stats = {
+            'user_posts': len(user_posts),
+            'user_views': sum(post.views for post in user_posts) if user_posts else 0,
+            'user_comments': 0,  # Add comment functionality later
+            'days_active': (datetime.utcnow() - current_user.created_at).days + 1 if current_user.created_at else 1
+        }
+    
     return render_template('index.html', 
                          recent_posts=recent_posts,
-                         total_users=total_users,
-                         total_posts=total_posts)
+                         general_stats=general_stats,
+                         user_stats=user_stats)
 
 @app.route('/api/health')
 def health_check():
@@ -248,7 +266,16 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("Admin user created: username=admin, password=admin123")
+            print("✅ Admin user created: username=admin, password=admin123")
+        else:
+            # Verify admin password is working
+            if not admin.check_password('admin123'):
+                print("🔧 Fixing admin password...")
+                admin.set_password('admin123')
+                db.session.commit()
+                print("✅ Admin password fixed!")
+            else:
+                print("✅ Admin user verified: username=admin, password=admin123")
     
     print("🚀 Starting Flask app with auto-reload enabled...")
     print("🔄 Files will be automatically reloaded when changed")
