@@ -1,0 +1,71 @@
+/* Custom styles for DockFlask */
+
+.hero-section {
+    padding: 2rem 0;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+#api-response {
+    min-height: 100px;
+}
+
+.api-response-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.status-healthy {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+footer {
+    margin-top: auto;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+pre code {
+    font-size: 0.9rem;
+}
+
+.btn {
+    margin: 0 5px;
+}
