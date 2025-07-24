@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto text-center">
+        <div class="hero-section">
+            <h1 class="display-4 mb-4">🐳 Welcome to DockFlask!</h1>
+            <p class="lead mb-4">A modern Python Flask application running in Docker containers</p>
+            
+            <div class="row g-4 mt-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">🐍 Python Flask</h5>
+                            <p class="card-text">Lightweight and powerful web framework</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">🐳 Docker</h5>
+                            <p class="card-text">Containerized for easy deployment</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">⚡ Fast & Reliable</h5>
+                            <p class="card-text">Optimized for production use</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h3>API Endpoints</h3>
+                <div class="list-group mt-3">
+                    <a href="/api/health" class="list-group-item list-group-item-action" target="_blank">
+                        <strong>GET /api/health</strong> - Health check endpoint
+                    </a>
+                    <a href="/api/info" class="list-group-item list-group-item-action" target="_blank">
+                        <strong>GET /api/info</strong> - Application information
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-primary" onclick="checkHealth()">Test Health Check</button>
+                <button class="btn btn-info" onclick="getAppInfo()">Get App Info</button>
+            </div>
+
+            <div id="api-response" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
