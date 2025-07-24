@@ -78,6 +78,21 @@
                                     <span>{{ post.likes or 0 }}</span>
                                 </div>
                             </div>
+                            
+                            <!-- Post Actions -->
+                            {% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.is_admin) %}
+                            <div class="blog-card-actions">
+                                <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-sm btn-outline-primary" title="Edit Post">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-post-btn" 
+                                        title="Delete Post" 
+                                        data-post-id="{{ post.id }}" 
+                                        data-post-title="{{ post.title }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </article>
@@ -190,6 +205,65 @@ document.addEventListener('DOMContentLoaded', function() {
     blogCards.forEach(card => {
         observer.observe(card);
     });
+
+    // Delete post functionality
+    const deleteButtons = document.querySelectorAll('.delete-post-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent card click event
+            const postId = this.getAttribute('data-post-id');
+            const postTitle = this.getAttribute('data-post-title');
+            showDeleteModal(postId, postTitle);
+        });
+    });
 });
+
+let currentDeletePostId = null;
+
+function showDeleteModal(postId, postTitle) {
+    currentDeletePostId = postId;
+    document.getElementById('deletePostTitle').textContent = postTitle;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+function confirmDelete() {
+    if (currentDeletePostId) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete_post/${currentDeletePostId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-danger">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-light">Are you sure you want to delete this post?</p>
+                <div class="alert alert-danger">
+                    <strong>Warning:</strong> This action cannot be undone. The post "<span id="deletePostTitle"></span>" will be permanently deleted.
+                </div>
+            </div>
+            <div class="modal-footer border-danger">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-2"></i>Delete Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
