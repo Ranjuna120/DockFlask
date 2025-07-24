@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}DockFlask - Modern Python Flask Application{% endblock %}
+
+{% block content %}
+<main class="fade-in">
+    <!-- Hero Section -->
+    <div class="container-fluid">
+        <div class="text-center mb-5 slide-up">
+            <h1 class="display-1">🐳 Welcome to DockFlask!</h1>
+            <p class="lead">A modern Python Flask application running in Docker containers with stunning UI</p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card feature-card h-100 slide-up">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-rocket text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="card-title">Fast & Modern</h4>
+                        <p class="card-text">Built with Flask 2.3+ and modern web technologies for optimal performance and user experience.</p>
+                        <a href="{{ url_for('about') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 slide-up" style="animation-delay: 0.1s;">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-database text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="card-title">Database Ready</h4>
+                        <p class="card-text">Integrated with MySQL database, user authentication, and complete CRUD operations.</p>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success">Dashboard</a>
+                        {% else %}
+                            <a href="{{ url_for('register') }}" class="btn btn-outline-success">Get Started</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100 slide-up" style="animation-delay: 0.2s;">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="card-title">Docker Powered</h4>
+                        <p class="card-text">Containerized with Docker for easy deployment and scalability across any environment.</p>
+                        <a href="#api-section" class="btn btn-outline-warning">API Docs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        {% if current_user.is_authenticated %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card glass slide-up">
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">
+                            <i class="fas fa-chart-line text-primary"></i>
+                            Your Activity Overview
+                        </h3>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h2 class="text-primary">{{ stats.user_posts or 0 }}</h2>
+                                    <p class="text-muted">Your Posts</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h2 class="text-success">{{ stats.user_views or 0 }}</h2>
+                                    <p class="text-muted">Post Views</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h2 class="text-info">{{ stats.user_comments or 0 }}</h2>
+                                    <p class="text-muted">Comments</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h2 class="text-warning">{{ current_user.created_at.strftime('%d') if current_user.created_at else '1' }}</h2>
+                                    <p class="text-muted">Days Active</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        {% if current_user.is_authenticated %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4">Quick Actions</h3>
+            </div>
+            <div class="col-md-4">
+                <div class="card action-card slide-up">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle text-primary" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                        <h5>Create New Post</h5>
+                        <p class="text-muted">Share your thoughts with the community</p>
+                        <a href="{{ url_for('create_post') }}" class="btn btn-primary">
+                            <i class="fas fa-pen"></i> Write Post
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card action-card slide-up" style="animation-delay: 0.1s;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-list text-success" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                        <h5>Browse Posts</h5>
+                        <p class="text-muted">Explore content from other users</p>
+                        <a href="{{ url_for('posts') }}" class="btn btn-success">
+                            <i class="fas fa-book-open"></i> View Posts
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card action-card slide-up" style="animation-delay: 0.2s;">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-cog text-info" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                        <h5>Profile Settings</h5>
+                        <p class="text-muted">Manage your account preferences</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-info">
+                            <i class="fas fa-cogs"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Call to Action for Non-Authenticated Users -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card glass text-center slide-up">
+                    <div class="card-body py-5">
+                        <h2 class="mb-4">Join DockFlask Today!</h2>
+                        <p class="lead mb-4">Create your account and start sharing your ideas with our community.</p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Get Started
+                            </a>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- API Endpoints Section -->
+        <div class="row mb-5" id="api-section">
+            <div class="col-12">
+                <h2 class="text-center mb-4">API Endpoints</h2>
+            </div>
+            <div class="col-12">
+                <div class="card glass slide-up">
+                    <div class="card-body">
+                        <div class="api-endpoint">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="api-method get">GET</span>
+                                <code class="api-path">/api/health</code>
+                                <span class="ms-auto text-muted">Health check endpoint</span>
+                            </div>
+                            <p class="text-muted mb-0">Returns the application health status and basic information.</p>
+                        </div>
+                        
+                        <div class="api-endpoint">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="api-method get">GET</span>
+                                <code class="api-path">/api/info</code>
+                                <span class="ms-auto text-muted">Application information</span>
+                            </div>
+                            <p class="text-muted mb-0">Provides detailed application information and configuration.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Buttons -->
+        <div class="text-center mb-5 slide-up">
+            <h3 class="mb-4">Test API Endpoints</h3>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <button class="btn btn-success" onclick="testHealthCheck()">
+                    <i class="fas fa-heartbeat"></i> Test Health Check
+                </button>
+                <button class="btn btn-info" onclick="testAppInfo()">
+                    <i class="fas fa-info-circle"></i> Get App Info
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- JavaScript for API Testing -->
+<script>
+function testHealthCheck() {
+    fetch('/api/health')
+        .then(response => response.json())
+        .then(data => {
+            alert('Health Check Result:\n' + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+}
+
+function testAppInfo() {
+    fetch('/api/info')
+        .then(response => response.json())
+        .then(data => {
+            alert('App Info:\n' + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+}
+
+// Add smooth scrolling
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add animation delay to cards
+    const cards = document.querySelectorAll('.slide-up');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+</script>
+{% endblock %}
