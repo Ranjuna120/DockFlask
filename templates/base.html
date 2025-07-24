@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Custom CSS Files -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}?v=2">
     {% block additional_css %}{% endblock %}
 </head>
 <body>
@@ -88,12 +88,83 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-light mt-5 py-4">
-        <div class="container text-center">
-            <p>&copy; 2025 DockFlask Pro. Built with Flask, MySQL & Docker 🚀</p>
-            {% if current_user.is_authenticated %}
-                <small class="text-muted">Welcome back, {{ current_user.get_full_name() }}!</small>
-            {% endif %}
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5 class="footer-title">
+                        <i class="fas fa-rocket me-2"></i>
+                        DockFlask Pro
+                    </h5>
+                    <p class="footer-description">
+                        A modern Flask application with MySQL database, user authentication, and beautiful dark theme UI.
+                    </p>
+                    <div class="footer-social">
+                        <a href="https://github.com/Ranjuna120" class="social-link"><i class="fab fa-github"></i></a>
+                        <a href="https://www.linkedin.com/in/rivithranjuna/" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-docker"></i></a>
+                        <a href="https://www.facebook.com/rivith.ranjuna/" class="social-link"><i class="fab fa-facebook"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="footer-subtitle">Quick Links</h6>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('home') }}">Home</a></li>
+                        <li><a href="{{ url_for('posts') }}">Blog Posts</a></li>
+                        <li><a href="{{ url_for('about') }}">About</a></li>
+                        {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="footer-subtitle">Features</h6>
+                    <ul class="footer-links">
+                        <li><span>User Management</span></li>
+                        <li><span>Blog System</span></li>
+                        <li><span>Admin Panel</span></li>
+                        <li><span>MySQL Database</span></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h6 class="footer-subtitle">System Status</h6>
+                    <div class="system-status">
+                        <div class="status-item">
+                            <i class="fas fa-database text-success me-2"></i>
+                            <span>Database: Connected</span>
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-server text-success me-2"></i>
+                            <span>Server: Online</span>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                        <div class="status-item">
+                            <i class="fas fa-user text-info me-2"></i>
+                            <span>Welcome, {{ current_user.get_full_name() }}!</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <hr class="footer-divider">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="footer-copyright">
+                        &copy; 2025 DockFlask Pro. Built with 
+                        <i class="fas fa-heart text-danger mx-1"></i> 
+                        using Flask, MySQL & Docker
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="footer-tech">
+                        <span class="tech-badge">Flask</span>
+                        <span class="tech-badge">MySQL</span>
+                        <span class="tech-badge">Docker</span>
+                        <span class="tech-badge">Bootstrap</span>
+                    </p>
+                </div>
+            </div>
         </div>
     </footer>
 
