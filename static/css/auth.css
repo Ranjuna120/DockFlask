@@ -1,0 +1,351 @@
+/* Authentication Pages CSS */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: 
+        linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%),
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23667eea" stop-opacity="0.1"/><stop offset="100%" stop-color="%23667eea" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="150" fill="url(%23a)"/><circle cx="800" cy="300" r="100" fill="url(%23a)"/><circle cx="500" cy="700" r="120" fill="url(%23a)"/></svg>');
+    background-size: 100% 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-container::before {
+    content: '';
+    position: absolute;
+    top: -50vh;
+    left: -50vw;
+    width: 200vw;
+    height: 200vh;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(240, 147, 251, 0.1) 0%, transparent 40%);
+    animation: authBackground 20s linear infinite;
+    z-index: -1;
+}
+
+@keyframes authBackground {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.auth-card {
+    background: rgba(22, 33, 62, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 2rem;
+    padding: 3rem;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(102, 126, 234, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.6s ease-out;
+}
+
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.auth-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+    color: #a8b2d1;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.auth-form {
+    margin-bottom: 2rem;
+}
+
+.auth-form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.auth-form-label {
+    display: block;
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.025em;
+}
+
+.auth-form-control {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: rgba(15, 52, 96, 0.6);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 1rem;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.auth-form-control:focus {
+    border-color: #667eea;
+    background: rgba(15, 52, 96, 0.8);
+    box-shadow: 
+        0 0 0 3px rgba(102, 126, 234, 0.15),
+        0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+.auth-form-control::placeholder {
+    color: #718096;
+    font-weight: 400;
+}
+
+.auth-button {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 1rem;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.auth-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.auth-button:hover::before {
+    left: 100%;
+}
+
+.auth-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.auth-button:active {
+    transform: translateY(-1px);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+    background: rgba(22, 33, 62, 0.95);
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.auth-link-text {
+    color: #a8b2d1;
+    font-size: 0.95rem;
+}
+
+.auth-link-button {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.auth-link-button::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+}
+
+.auth-link-button:hover::after {
+    width: 100%;
+}
+
+.auth-link-button:hover {
+    color: #764ba2;
+    text-decoration: none;
+}
+
+/* Checkbox Styling */
+.auth-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.auth-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 0.375rem;
+    background: rgba(15, 52, 96, 0.6);
+    margin-right: 0.75rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.auth-checkbox input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.auth-checkbox input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.auth-checkbox label {
+    color: #a8b2d1;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Error Messages */
+.auth-error {
+    background: rgba(250, 112, 154, 0.1);
+    border: 1px solid rgba(250, 112, 154, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #fa709a;
+    font-size: 0.9rem;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+}
+
+/* Success Messages */
+.auth-success {
+    background: rgba(79, 172, 254, 0.1);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #4facfe;
+    font-size: 0.9rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .auth-card {
+        margin: 1rem;
+        padding: 2rem;
+        border-radius: 1.5rem;
+    }
+    
+    .auth-title {
+        font-size: 2rem;
+    }
+    
+    .auth-form-control {
+        padding: 0.875rem 1rem;
+    }
+    
+    .auth-button {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+/* Loading State */
+.auth-button.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.auth-button.loading::after {
+    content: '';
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    top: 50%;
+    left: 50%;
+    margin-left: -0.5rem;
+    margin-top: -0.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
