@@ -61,6 +61,11 @@ body {
     color: #fee140 !important;
 }
 
+/* Ensure all text is visible */
+.text-center, .text-center h3, .text-center h2, .text-center h1 {
+    color: var(--text-primary) !important;
+}
+
 /* Animated Background */
 body::before {
     content: '';
@@ -98,6 +103,17 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
     letter-spacing: -0.025em;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+h3 {
+    color: var(--text-primary) !important;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+h3.text-center {
+    color: var(--text-primary) !important;
 }
 
 h1 {
@@ -280,6 +296,41 @@ h1 {
 .stat-item:hover .text-muted,
 .stat-item:hover .stat-label {
     color: #ffffff !important;
+}
+
+/* Section Headings */
+.card-body h3 {
+    color: var(--text-primary) !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1.5rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: block !important;
+    visibility: visible !important;
+}
+
+.card-body h3 i {
+    margin-right: 0.5rem;
+    opacity: 0.8;
+}
+
+/* Specific fixes for section titles */
+.card-body h3:contains("Platform Statistics"),
+.card-body h3:contains("Your Activity Overview") {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.section-title {
+    color: #ffffff !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1.5rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Buttons */
