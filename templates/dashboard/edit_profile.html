@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - DockFlask Pro{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v={{ range(1, 9999) | random }}">
+<style>
+.profile-edit-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.profile-edit-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    padding: 2rem;
+    border-radius: 1rem 1rem 0 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-edit-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.profile-edit-header h1 {
+    position: relative;
+    z-index: 10;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.profile-edit-header .subtitle {
+    position: relative;
+    z-index: 10;
+    opacity: 0.95;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.form-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 1rem 1rem;
+    padding: 2rem;
+}
+
+.profile-info {
+    background: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-current-info h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.profile-current-info p {
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    background: var(--darker-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.form-control:focus {
+    background: var(--darker-bg) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25) !important;
+    color: var(--text-primary) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+.btn-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.password-change-notice {
+    background: var(--darker-bg);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.password-change-notice .notice-icon {
+    color: #ffc107;
+    font-size: 1.25rem;
+}
+
+.password-change-notice .notice-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.password-change-notice .notice-text strong {
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+    }
+    
+    .profile-info {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-edit-container">
+    <div class="profile-edit-header">
+        <h1><i class="fas fa-user-edit me-2"></i>Edit Profile</h1>
+        <p class="subtitle">Update your personal information and account settings</p>
+    </div>
+    
+    <div class="form-container">
+        <!-- Current Profile Info -->
+        <div class="profile-info">
+            <div class="profile-avatar-large">
+                {{ current_user.first_name[0] if current_user.first_name else 'U' }}
+            </div>
+            <div class="profile-current-info">
+                <h4>{{ current_user.get_full_name() }}</h4>
+                <p><i class="fas fa-at me-1"></i>{{ current_user.username }}</p>
+                <p><i class="fas fa-envelope me-1"></i>{{ current_user.email }}</p>
+                <p><i class="fas fa-calendar me-1"></i>Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+            </div>
+        </div>
+
+        <!-- Password Change Notice -->
+        <div class="password-change-notice">
+            <div class="notice-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="notice-text">
+                <strong>Security Note:</strong> To change your password, please use the separate 
+                <a href="{{ url_for('change_password') }}" class="text-warning">Change Password</a> option after saving your profile changes.
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.first_name.label(class="form-label") }}
+                    {{ form.first_name(class="form-control", placeholder="Enter your first name") }}
+                    {% if form.first_name.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.first_name.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.last_name.label(class="form-label") }}
+                    {{ form.last_name(class="form-control", placeholder="Enter your last name") }}
+                    {% if form.last_name.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.last_name.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control", placeholder="Choose a unique username") }}
+                {% if form.username.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.username.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control", placeholder="Enter your email address") }}
+                {% if form.email.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.email.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="btn-group">
+                <div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('change_password') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-lock me-2"></i>Change Password
+                    </a>
+                    {{ form.submit(class="btn btn-primary", value="Update Profile") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Form validation feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('.form-control');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            this.classList.toggle('is-valid', this.value.trim() !== '');
+        });
+    });
+    
+    // Real-time username validation
+    const usernameInput = document.querySelector('input[name="username"]');
+    if (usernameInput) {
+        usernameInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value.length > 0 && value.length < 4) {
+                this.style.borderColor = '#dc3545';
+            } else if (value.length >= 4) {
+                this.style.borderColor = '#28a745';
+            } else {
+                this.style.borderColor = 'var(--border-color)';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
