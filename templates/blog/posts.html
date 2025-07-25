@@ -2,6 +2,7 @@
 
 {% block additional_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reactions.css') }}">
 {% endblock %}
 
 {% block title %}Blog Posts - DockFlask{% endblock %}
@@ -72,8 +73,12 @@
                                     <span>{{ post.views or 0 }}</span>
                                 </div>
                                 <div class="blog-stat">
-                                    <i class="fas fa-heart"></i>
-                                    <span>{{ post.likes or 0 }}</span>
+                                    <i class="fas fa-thumbs-up text-success"></i>
+                                    <span id="like-count-{{ post.id }}">0</span>
+                                </div>
+                                <div class="blog-stat">
+                                    <i class="fas fa-thumbs-down text-danger"></i>
+                                    <span id="dislike-count-{{ post.id }}">0</span>
                                 </div>
                             </div>
                             
@@ -264,4 +269,37 @@ function confirmDelete() {
         </div>
     </div>
 </div>
+
+<script>
+// Load reaction counts for all posts
+document.addEventListener('DOMContentLoaded', function() {
+    const posts = document.querySelectorAll('.blog-card');
+    
+    posts.forEach(card => {
+        const postTitle = card.querySelector('.blog-card-title a');
+        if (postTitle) {
+            const postUrl = postTitle.href;
+            const postId = postUrl.split('/').pop();
+            if (postId && !isNaN(postId)) {
+                loadPostReactionCounts(postId);
+            }
+        }
+    });
+});
+
+function loadPostReactionCounts(postId) {
+    fetch(`/api/post/${postId}/reactions`)
+        .then(response => response.json())
+        .then(data => {
+            const likeElement = document.getElementById(`like-count-${postId}`);
+            const dislikeElement = document.getElementById(`dislike-count-${postId}`);
+            
+            if (likeElement) likeElement.textContent = data.likes_count;
+            if (dislikeElement) dislikeElement.textContent = data.dislikes_count;
+        })
+        .catch(error => {
+            console.error('Error loading reaction counts:', error);
+        });
+}
+</script>
 {% endblock %}
