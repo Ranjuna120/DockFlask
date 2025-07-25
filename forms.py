@@ -49,3 +49,7 @@ class ChangePasswordForm(FlaskForm):
     new_password2 = PasswordField('Repeat New Password', 
                                  validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
+
+class CommentForm(FlaskForm):
+    content = TextAreaField('Your Comment', validators=[DataRequired(), Length(min=5, max=500)])
+    submit = SubmitField('Post Comment')
