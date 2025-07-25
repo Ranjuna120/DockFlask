@@ -7,7 +7,7 @@ import threading
 import time
 from datetime import datetime
 from config import config
-from models import db, User, Post, SystemLog
+from models import db, User, Post, SystemLog, Category
 from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm
 
 # Log system actions
@@ -185,6 +185,9 @@ def posts():
         posts_list = posts_query.limit(10).offset((page - 1) * 10).all()
         total_posts = posts_query.count()
         
+        # Get categories for the filter dropdown
+        categories = Category.query.all()
+        
         # Simple pagination object
         class SimplePagination:
             def __init__(self, items, page, per_page, total):
@@ -199,11 +202,12 @@ def posts():
                 self.next_num = page + 1 if self.has_next else None
         
         pagination = SimplePagination(posts_list, page, 10, total_posts)
-        return render_template('blog/posts.html', posts=posts_list, pagination=pagination)
+        return render_template('blog/posts.html', posts=posts_list, pagination=pagination, categories=categories)
     except Exception as e:
         print(f"Posts route error: {e}")
         posts_list = Post.query.filter_by(is_published=True).order_by(Post.created_at.desc()).limit(10).all()
-        return render_template('blog/posts.html', posts=posts_list, pagination=None)
+        categories = Category.query.all()
+        return render_template('blog/posts.html', posts=posts_list, pagination=None, categories=categories)
 
 @app.route('/post/<int:id>')
 def post_detail(id):
@@ -221,10 +225,15 @@ def post_detail(id):
 @login_required
 def create_post():
     form = PostForm()
+    # Load categories for the dropdown
+    categories = Category.query.all()
+    form.category_id.choices = [(0, 'No Category')] + [(c.id, c.name) for c in categories]
+    
     if form.validate_on_submit():
         post = Post(
             title=form.title.data,
             content=form.content.data,
+            category_id=form.category_id.data if form.category_id.data != 0 else None,
             is_published=form.is_published.data,
             user_id=current_user.id
         )
@@ -246,10 +255,14 @@ def edit_post(id):
         return redirect(url_for('post_detail', id=id))
     
     form = PostForm()
+    # Load categories for the dropdown
+    categories = Category.query.all()
+    form.category_id.choices = [(0, 'No Category')] + [(c.id, c.name) for c in categories]
     
     if form.validate_on_submit():
         post.title = form.title.data
         post.content = form.content.data
+        post.category_id = form.category_id.data if form.category_id.data != 0 else None
         post.is_published = form.is_published.data
         post.updated_at = datetime.utcnow()
         db.session.commit()
@@ -260,6 +273,7 @@ def edit_post(id):
     if request.method == 'GET':
         form.title.data = post.title
         form.content.data = post.content
+        form.category_id.data = post.category_id if post.category_id else 0
         form.is_published.data = post.is_published
     
     return render_template('blog/edit_post.html', form=form, post=post)
@@ -443,6 +457,27 @@ if __name__ == '__main__':
                 print("✅ Admin password fixed!")
             else:
                 print("✅ Admin user verified: username=admin, password=admin123")
+        
+        # Create sample categories if they don't exist
+        if Category.query.count() == 0:
+            categories = [
+                Category(name='Technology', description='Posts about technology, programming, and software development'),
+                Category(name='Lifestyle', description='Posts about daily life, tips, and personal experiences'),
+                Category(name='Business', description='Posts about business, entrepreneurship, and career'),
+                Category(name='Travel', description='Posts about travel experiences and destinations'),
+                Category(name='Food', description='Posts about cooking, recipes, and food reviews'),
+                Category(name='Health', description='Posts about health, fitness, and wellness'),
+                Category(name='Education', description='Posts about learning, tutorials, and educational content'),
+                Category(name='Entertainment', description='Posts about movies, music, games, and entertainment'),
+            ]
+            
+            for category in categories:
+                db.session.add(category)
+            
+            db.session.commit()
+            print("✅ Sample categories created!")
+        else:
+            print("✅ Categories already exist in database")
     
     print("🚀 Starting Flask app with auto-reload enabled...")
     print("🔄 Files will be automatically reloaded when changed")
