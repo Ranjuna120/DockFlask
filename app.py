@@ -344,6 +344,64 @@ def change_password():
     
     return render_template('dashboard/change_password.html', form=form)
 
+@app.route('/stats')
+@login_required
+def stats():
+    # User's personal statistics
+    user_posts = Post.query.filter_by(user_id=current_user.id).all()
+    published_posts = [post for post in user_posts if post.is_published]
+    draft_posts = [post for post in user_posts if not post.is_published]
+    
+    # Calculate user stats
+    user_stats = {
+        'total_posts': len(user_posts),
+        'published_posts': len(published_posts),
+        'draft_posts': len(draft_posts),
+        'total_views': sum(post.views for post in user_posts) if user_posts else 0,
+        'avg_views_per_post': round(sum(post.views for post in user_posts) / len(user_posts), 1) if user_posts else 0,
+        'most_viewed_post': max(user_posts, key=lambda x: x.views) if user_posts else None,
+        'recent_posts': sorted(user_posts, key=lambda x: x.created_at, reverse=True)[:5],
+        'member_since': current_user.created_at,
+        'days_active': (datetime.utcnow() - current_user.created_at).days + 1 if current_user.created_at else 1
+    }
+    
+    # General platform statistics (if admin)
+    general_stats = None
+    if current_user.is_admin:
+        all_users = User.query.all()
+        all_posts = Post.query.all()
+        published_all_posts = Post.query.filter_by(is_published=True).all()
+        
+        general_stats = {
+            'total_users': len(all_users),
+            'total_posts': len(all_posts),
+            'published_posts': len(published_all_posts),
+            'total_views': sum(post.views for post in all_posts) if all_posts else 0,
+            'avg_posts_per_user': round(len(all_posts) / len(all_users), 1) if all_users else 0,
+            'most_active_user': max(all_users, key=lambda x: len(x.posts)) if all_users else None,
+            'recent_users': sorted(all_users, key=lambda x: x.created_at, reverse=True)[:5]
+        }
+    
+    # Monthly post creation data for charts
+    from collections import defaultdict
+    import calendar
+    
+    monthly_posts = defaultdict(int)
+    for post in user_posts:
+        month_key = post.created_at.strftime('%Y-%m')
+        monthly_posts[month_key] += 1
+    
+    # Convert to chart format
+    chart_data = {
+        'labels': list(monthly_posts.keys())[-6:],  # Last 6 months
+        'data': list(monthly_posts.values())[-6:]
+    }
+    
+    return render_template('dashboard/stats.html', 
+                         user_stats=user_stats, 
+                         general_stats=general_stats,
+                         chart_data=chart_data)
+
 @app.route('/about')
 def about():
     return render_template('about.html')
