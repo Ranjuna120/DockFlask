@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reactions.css') }}">
+{% endblock %}
+
 {% block title %}{{ post.title }} - DockFlask Pro{% endblock %}
 
 {% block content %}
@@ -24,6 +28,43 @@
                 
                 <div class="post-content">
                     {{ post.content.replace('\n', '<br>')|safe }}
+                </div>
+                
+                <!-- Post Reactions -->
+                <div class="post-reactions mt-4 pt-3 border-top">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="reaction-buttons d-flex align-items-center gap-3">
+                            {% if current_user.is_authenticated %}
+                            <button class="btn btn-outline-success reaction-btn" 
+                                    data-post-id="{{ post.id }}" 
+                                    data-type="like" 
+                                    id="like-btn-{{ post.id }}">
+                                <i class="fas fa-thumbs-up"></i>
+                                <span class="reaction-count" id="like-count-{{ post.id }}">0</span>
+                            </button>
+                            <button class="btn btn-outline-danger reaction-btn" 
+                                    data-post-id="{{ post.id }}" 
+                                    data-type="dislike" 
+                                    id="dislike-btn-{{ post.id }}">
+                                <i class="fas fa-thumbs-down"></i>
+                                <span class="reaction-count" id="dislike-count-{{ post.id }}">0</span>
+                            </button>
+                            {% else %}
+                            <div class="text-muted">
+                                <i class="fas fa-thumbs-up me-1"></i><span id="like-count-{{ post.id }}">0</span>
+                                <i class="fas fa-thumbs-down ms-3 me-1"></i><span id="dislike-count-{{ post.id }}">0</span>
+                                <small class="ms-3">
+                                    <a href="{{ url_for('login') }}">Login</a> to react
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="post-stats text-muted">
+                            <small>
+                                <i class="fas fa-eye me-1"></i>{{ post.views }} views
+                            </small>
+                        </div>
+                    </div>
                 </div>
                 
                 <footer class="mt-4 pt-4 border-top">
@@ -53,14 +94,85 @@
             </div>
         </article>
         
-        <!-- Related Posts or Comments section could go here -->
+        <!-- Comments Section -->
         <div class="mt-4">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-newspaper"></i> More Posts by {{ post.author.first_name }}</h5>
+                    <h5><i class="fas fa-comments"></i> Comments ({{ comments|length }})</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">More posts by this author coming soon!</p>
+                    {% if current_user.is_authenticated %}
+                    <!-- Comment Form -->
+                    <div class="comment-form mb-4">
+                        <h6><i class="fas fa-pencil-alt me-2"></i>Add a Comment</h6>
+                        <form method="POST" novalidate>
+                            {{ comment_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ comment_form.content(class="form-control", placeholder="Write your comment here...", rows="3") }}
+                                {% if comment_form.content.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in comment_form.content.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Commenting as {{ current_user.get_full_name() }}
+                                </small>
+                                {{ comment_form.submit(class="btn btn-primary btn-sm") }}
+                            </div>
+                        </form>
+                    </div>
+                    <hr>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        <a href="{{ url_for('login') }}" class="alert-link">Login</a> to post a comment.
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Comments List -->
+                    {% if comments %}
+                    <div class="comments-list">
+                        {% for comment in comments %}
+                        <div class="comment mb-3 p-3 border rounded">
+                            <div class="comment-header d-flex justify-content-between align-items-start mb-2">
+                                <div class="comment-author">
+                                    <strong class="text-primary">
+                                        <i class="fas fa-user-circle me-1"></i>
+                                        {{ comment.author.get_full_name() }}
+                                    </strong>
+                                    {% if comment.author.id == post.user_id %}
+                                        <span class="badge bg-success ms-2">Author</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                </small>
+                            </div>
+                            <div class="comment-content">
+                                {{ comment.content.replace('\n', '<br>')|safe }}
+                            </div>
+                            {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.is_admin) %}
+                            <div class="comment-actions mt-2">
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteComment({{ comment.id }})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                        <p>No comments yet. Be the first to comment!</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -102,6 +214,156 @@
 function showDeleteModal() {
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     deleteModal.show();
+}
+
+function deleteComment(commentId) {
+    if (confirm('Are you sure you want to delete this comment?')) {
+        fetch(`/comment/${commentId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error deleting comment. Please try again.');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting comment. Please try again.');
+        });
+    }
+}
+
+// Post Reactions Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const postId = {{ post.id }};
+    
+    // Load initial reaction counts
+    loadReactionCounts(postId);
+    
+    // Add event listeners to reaction buttons
+    document.querySelectorAll('.reaction-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const reactionType = this.dataset.type;
+            toggleReaction(postId, reactionType);
+        });
+    });
+});
+
+function loadReactionCounts(postId) {
+    fetch(`/api/post/${postId}/reactions`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById(`like-count-${postId}`).textContent = data.likes_count;
+            document.getElementById(`dislike-count-${postId}`).textContent = data.dislikes_count;
+            
+            // Update button styles based on user's reaction
+            const likeBtn = document.getElementById(`like-btn-${postId}`);
+            const dislikeBtn = document.getElementById(`dislike-btn-${postId}`);
+            
+            if (likeBtn && dislikeBtn) {
+                // Reset button styles
+                likeBtn.classList.remove('btn-success');
+                likeBtn.classList.add('btn-outline-success');
+                dislikeBtn.classList.remove('btn-danger');
+                dislikeBtn.classList.add('btn-outline-danger');
+                
+                // Highlight user's current reaction
+                if (data.user_reaction === 'like') {
+                    likeBtn.classList.remove('btn-outline-success');
+                    likeBtn.classList.add('btn-success');
+                } else if (data.user_reaction === 'dislike') {
+                    dislikeBtn.classList.remove('btn-outline-danger');
+                    dislikeBtn.classList.add('btn-danger');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading reactions:', error);
+        });
+}
+
+function toggleReaction(postId, reactionType) {
+    fetch(`/api/post/${postId}/react`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: reactionType })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update counts
+            document.getElementById(`like-count-${postId}`).textContent = data.likes_count;
+            document.getElementById(`dislike-count-${postId}`).textContent = data.dislikes_count;
+            
+            // Update button styles
+            const likeBtn = document.getElementById(`like-btn-${postId}`);
+            const dislikeBtn = document.getElementById(`dislike-btn-${postId}`);
+            
+            // Reset both buttons
+            likeBtn.classList.remove('btn-success');
+            likeBtn.classList.add('btn-outline-success');
+            dislikeBtn.classList.remove('btn-danger');
+            dislikeBtn.classList.add('btn-outline-danger');
+            
+            // Highlight current reaction
+            if (data.user_reaction === 'like') {
+                likeBtn.classList.remove('btn-outline-success');
+                likeBtn.classList.add('btn-success');
+            } else if (data.user_reaction === 'dislike') {
+                dislikeBtn.classList.remove('btn-outline-danger');
+                dislikeBtn.classList.add('btn-danger');
+            }
+            
+            // Show feedback
+            showReactionFeedback(data.action, reactionType);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update reaction. Please try again.');
+    });
+}
+
+function showReactionFeedback(action, reactionType) {
+    const messages = {
+        'added': `You ${reactionType}d this post!`,
+        'removed': `Reaction removed`,
+        'updated': `Changed to ${reactionType}`
+    };
+    
+    // Create and show a temporary toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = messages[action] || 'Reaction updated';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 9999;
+        transition: opacity 0.3s;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 2000);
 }
 </script>
 {% endif %}
