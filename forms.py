@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, TextAreaField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from models import User
 
@@ -32,6 +32,7 @@ class RegistrationForm(FlaskForm):
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=5, max=200)])
     content = TextAreaField('Content', validators=[DataRequired(), Length(min=10)])
+    category_id = SelectField('Category', coerce=int, choices=[], validators=[])
     is_published = BooleanField('Publish immediately')
     submit = SubmitField('Save Post')
 
