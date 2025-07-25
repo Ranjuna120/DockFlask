@@ -151,6 +151,77 @@ textarea.form-control {
     color: var(--text-primary);
 }
 
+/* Enhanced Category Dropdown Styles */
+.category-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.category-icon {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    position: absolute;
+    left: 0.75rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.category-select {
+    background: var(--darker-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.5rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+}
+
+.category-select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+    outline: none !important;
+}
+
+.category-select option {
+    background: var(--darker-bg) !important;
+    color: var(--text-primary) !important;
+    padding: 0.5rem;
+}
+
+.category-preview {
+    margin-left: auto;
+    padding: 0.4rem 0.8rem;
+    border-radius: 1rem;
+    background: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    min-width: 120px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.category-preview-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.category-preview.has-category {
+    background: linear-gradient(135deg, var(--primary-color), #6366f1);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.category-preview.has-category .category-preview-text {
+    color: white;
+}
+
 @media (max-width: 768px) {
     .btn-group {
         flex-direction: column;
@@ -159,6 +230,17 @@ textarea.form-control {
     
     .btn-group .btn {
         width: 100%;
+    }
+    
+    .category-select-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .category-preview {
+        margin-left: 0;
+        align-self: center;
     }
 }
 </style>
@@ -189,7 +271,13 @@ textarea.form-control {
 
             <div class="form-group">
                 {{ form.category_id.label(class="form-label") }}
-                {{ form.category_id(class="form-select") }}
+                <div class="category-select-wrapper">
+                    <i class="fas fa-tags category-icon"></i>
+                    {{ form.category_id(class="form-select category-select", onchange="updateCategoryPreview(this)") }}
+                    <div class="category-preview" id="categoryPreview">
+                        <span class="category-preview-text">No category selected</span>
+                    </div>
+                </div>
                 {% if form.category_id.errors %}
                     <div class="text-danger mt-1">
                         {% for error in form.category_id.errors %}
@@ -269,6 +357,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     publishCheck.addEventListener('change', updateBadges);
     updateBadges(); // Initial call
+});
+
+// Category preview functionality
+function updateCategoryPreview(selectElement) {
+    const preview = document.getElementById('categoryPreview');
+    const previewText = preview.querySelector('.category-preview-text');
+    
+    if (selectElement.value && selectElement.value !== '0') {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        previewText.textContent = selectedOption.text;
+        preview.classList.add('has-category');
+    } else {
+        previewText.textContent = 'No category selected';
+        preview.classList.remove('has-category');
+    }
+}
+
+// Initialize category preview on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelector('.category-select');
+    if (categorySelect) {
+        updateCategoryPreview(categorySelect);
+    }
 });
 </script>
 {% endblock %}
