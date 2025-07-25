@@ -113,6 +113,64 @@
                     Edit Profile
                 </a>
             </div>
+
+            <div class="action-card comments">
+                <div class="action-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3 class="action-title">Comments</h3>
+                <p class="action-description">Manage comments on your posts, moderate discussions, and engage with your community.</p>
+                <div class="comment-stats">
+                    <div class="comment-stat">
+                        <span class="stat-number">{{ stats.total_comments or 0 }}</span>
+                        <span class="stat-label">Your Comments</span>
+                    </div>
+                    <div class="comment-stat">
+                        <span class="stat-number">{{ stats.comments_received or 0 }}</span>
+                        <span class="stat-label">Comments Received</span>
+                    </div>
+                </div>
+                <div class="action-button" onclick="showCommentFilters()">
+                    <i class="fas fa-filter"></i>
+                    Manage Comments
+                </div>
+            </div>
+        </div>
+
+        <!-- Comment Filter Modal -->
+        <div id="commentModal" class="comment-modal" style="display: none;">
+            <div class="comment-modal-content">
+                <div class="comment-modal-header">
+                    <h3><i class="fas fa-comments me-2"></i>Comment Management</h3>
+                    <span class="close-modal" onclick="hideCommentFilters()">&times;</span>
+                </div>
+                <div class="comment-filters">
+                    <div class="filter-group">
+                        <label for="commentFilter">Filter Comments:</label>
+                        <select id="commentFilter" class="form-select" onchange="filterComments()">
+                            <option value="all">All Comments</option>
+                            <option value="my-posts">Comments on My Posts</option>
+                            <option value="my-comments">My Comments</option>
+                            <option value="pending">Pending Approval</option>
+                            <option value="approved">Approved</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sortComments">Sort By:</label>
+                        <select id="sortComments" class="form-select" onchange="sortComments()">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="post">By Post</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="comment-list" id="commentList">
+                    <div class="no-comments">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No comments found. Comments will appear here when users start engaging with your posts.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Recent Activity -->
@@ -200,6 +258,153 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = 'translateY(0) scale(1)';
         });
     });
+});
+
+// Comment Management Functions
+function showCommentFilters() {
+    const modal = document.getElementById('commentModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Load comments when modal opens
+    loadComments();
+}
+
+function hideCommentFilters() {
+    const modal = document.getElementById('commentModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function filterComments() {
+    const filter = document.getElementById('commentFilter').value;
+    const commentList = document.getElementById('commentList');
+    
+    // Show loading state
+    commentList.innerHTML = `
+        <div class="loading-comments" style="text-align: center; padding: 2rem; color: #a8b2d1;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>Loading comments...</p>
+        </div>
+    `;
+    
+    // Simulate loading (replace with actual API call)
+    setTimeout(() => {
+        loadComments(filter);
+    }, 1000);
+}
+
+function sortComments() {
+    const sort = document.getElementById('sortComments').value;
+    const filter = document.getElementById('commentFilter').value;
+    loadComments(filter, sort);
+}
+
+function loadComments(filter = 'all', sort = 'newest') {
+    const commentList = document.getElementById('commentList');
+    
+    // Show loading state
+    commentList.innerHTML = `
+        <div class="loading-comments" style="text-align: center; padding: 2rem; color: #a8b2d1;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>Loading comments...</p>
+        </div>
+    `;
+    
+    // Fetch comments from API
+    fetch(`/api/comments?filter=${filter}&sort=${sort}`)
+        .then(response => response.json())
+        .then(comments => {
+            if (comments.length === 0) {
+                commentList.innerHTML = `
+                    <div class="no-comments">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No comments found for filter "${filter}".</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem;">Comments will appear here when users start engaging with your posts.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let commentsHtml = '<div class="comments-container">';
+            comments.forEach(comment => {
+                commentsHtml += `
+                    <div class="comment-item" data-comment-id="${comment.id}">
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <strong>${comment.author.first_name} ${comment.author.last_name}</strong>
+                                <span class="comment-username">(@${comment.author.username})</span>
+                            </div>
+                            <div class="comment-actions">
+                                <span class="comment-date">${comment.created_at}</span>
+                                ${comment.can_delete ? `
+                                    <button class="btn-delete-comment" onclick="deleteCommentFromDashboard(${comment.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="comment-post">
+                            <i class="fas fa-file-alt"></i>
+                            On post: <a href="/post/${comment.post.id}" target="_blank">${comment.post.title}</a>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                    </div>
+                `;
+            });
+            commentsHtml += '</div>';
+            
+            commentList.innerHTML = commentsHtml;
+        })
+        .catch(error => {
+            console.error('Error loading comments:', error);
+            commentList.innerHTML = `
+                <div class="error-comments" style="text-align: center; padding: 2rem; color: #ff6b6b;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                    <p>Error loading comments. Please try again.</p>
+                </div>
+            `;
+        });
+}
+
+// Delete comment from dashboard
+function deleteCommentFromDashboard(commentId) {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+        return;
+    }
+    
+    // Create a form and submit it
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/delete_comment/${commentId}`;
+    
+    // Add CSRF token if available
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken.getAttribute('content');
+        form.appendChild(csrfInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('commentModal');
+    if (event.target === modal) {
+        hideCommentFilters();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        hideCommentFilters();
+    }
 });
 </script>
 {% endblock %}
