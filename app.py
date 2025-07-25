@@ -10,6 +10,21 @@ from config import config
 from models import db, User, Post, SystemLog
 from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm
 
+# Log system actions
+def log_action(action, details=None):
+    try:
+        log = SystemLog(
+            action=action,
+            user_id=current_user.id if current_user.is_authenticated else None,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            details=details
+        )
+        db.session.add(log)
+        db.session.commit()
+    except:
+        pass
+
 def create_app(config_name=None):
     app = Flask(__name__)
     
@@ -30,21 +45,6 @@ def create_app(config_name=None):
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
-    
-    # Log system actions
-    def log_action(action, details=None):
-        try:
-            log = SystemLog(
-                action=action,
-                user_id=current_user.id if current_user.is_authenticated else None,
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent'),
-                details=details
-            )
-            db.session.add(log)
-            db.session.commit()
-        except:
-            pass
     
     return app, login_manager
 
@@ -283,6 +283,66 @@ def delete_post(id):
     
     flash(f'Post "{post_title}" has been deleted successfully!', 'success')
     return redirect(url_for('posts'))
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    
+    if form.validate_on_submit():
+        # Check if username is being changed and if it's already taken
+        if form.username.data != current_user.username:
+            existing_user = User.query.filter_by(username=form.username.data).first()
+            if existing_user:
+                flash('Username is already taken. Please choose a different one.', 'error')
+                return render_template('dashboard/edit_profile.html', form=form)
+        
+        # Check if email is being changed and if it's already taken
+        if form.email.data != current_user.email:
+            existing_email = User.query.filter_by(email=form.email.data).first()
+            if existing_email:
+                flash('Email is already registered. Please use a different email.', 'error')
+                return render_template('dashboard/edit_profile.html', form=form)
+        
+        # Update user information
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        current_user.first_name = form.first_name.data
+        current_user.last_name = form.last_name.data
+        
+        db.session.commit()
+        log_action('profile_updated', f'Profile updated for user {current_user.username}')
+        flash('Your profile has been updated successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    # Pre-populate form with current user data
+    if request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+        form.first_name.data = current_user.first_name
+        form.last_name.data = current_user.last_name
+    
+    return render_template('dashboard/edit_profile.html', form=form)
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    
+    if form.validate_on_submit():
+        # Verify current password
+        if not current_user.check_password(form.current_password.data):
+            flash('Current password is incorrect.', 'error')
+            return render_template('dashboard/change_password.html', form=form)
+        
+        # Update password
+        current_user.set_password(form.new_password.data)
+        db.session.commit()
+        log_action('password_changed', f'Password changed for user {current_user.username}')
+        flash('Your password has been changed successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('dashboard/change_password.html', form=form)
 
 @app.route('/about')
 def about():
