@@ -1,0 +1,156 @@
+/* Post Reactions CSS */
+.post-reactions {
+    background: rgba(22, 33, 62, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.reaction-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.reaction-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.reaction-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.reaction-btn i {
+    font-size: 1.1rem;
+}
+
+.reaction-count {
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Like button states */
+.reaction-btn[data-type="like"] {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.reaction-btn[data-type="like"]:hover {
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.reaction-btn[data-type="like"].btn-success {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+/* Dislike button states */
+.reaction-btn[data-type="dislike"] {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.reaction-btn[data-type="dislike"]:hover {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.reaction-btn[data-type="dislike"].btn-danger {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* Post stats styling */
+.post-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Animation for reaction changes */
+@keyframes reactionPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.reaction-btn.animate {
+    animation: reactionPulse 0.3s ease;
+}
+
+/* Toast notification styling */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.toast-notification.error {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* Blog card reaction stats */
+.blog-card-stats .blog-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: #a8b2d1;
+}
+
+.blog-card-stats .blog-stat i {
+    font-size: 0.85rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .post-reactions {
+        padding: 0.75rem;
+    }
+    
+    .reaction-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    
+    .reaction-btn {
+        justify-content: center;
+        padding: 0.75rem 1rem;
+    }
+    
+    .post-stats {
+        justify-content: center;
+        margin-top: 1rem;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .reaction-btn {
+        background: rgba(22, 33, 62, 0.8);
+    }
+    
+    .reaction-btn:hover {
+        background: rgba(22, 33, 62, 0.9);
+    }
+}
