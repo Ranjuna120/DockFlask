@@ -2,51 +2,261 @@
 
 {% block title %}Create Post - DockFlask Pro{% endblock %}
 
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ range(1, 9999) | random }}">
+<style>
+.create-post-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.create-post-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    padding: 2rem;
+    border-radius: 1rem 1rem 0 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.create-post-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.create-post-header h1 {
+    position: relative;
+    z-index: 10;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: rgb(255, 255, 255) !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.create-post-header .subtitle {
+    position: relative;
+    z-index: 10;
+    opacity: 0.95;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.form-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 1rem 1rem;
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    background: var(--darker-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: var(--darker-bg) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25) !important;
+    color: var(--text-primary) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+textarea.form-control {
+    min-height: 300px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.form-check {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-check-input {
+    background-color: var(--darker-bg) !important;
+    border-color: var(--border-color) !important;
+    margin: 0 !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.form-check-label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    margin: 0 !important;
+    cursor: pointer;
+    user-select: none;
+}
+
+.btn-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.publish-info {
+    background: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.publish-info-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.publish-info-text strong {
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="fas fa-edit"></i> Create New Post</h4>
+<div class="create-post-container">
+    <div class="create-post-header">
+        <h1><i class="fas fa-plus-circle me-2"></i>Create New Post</h1>
+        <p class="subtitle">Share your thoughts and ideas with the community</p>
+    </div>
+    
+    <div class="form-container">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control", placeholder="Enter an engaging title for your post...") }}
+                {% if form.title.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.title.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.title.label(class="form-label") }}
-                        {{ form.title(class="form-control") }}
-                        {% if form.title.errors %}
-                            {% for error in form.title.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
+
+            <div class="form-group">
+                {{ form.content.label(class="form-label") }}
+                {{ form.content(class="form-control", placeholder="Write your post content here... Share your insights, experiences, and ideas.", rows="12") }}
+                {% if form.content.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.content.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
                     </div>
-                    
-                    <div class="mb-3">
-                        {{ form.content.label(class="form-label") }}
-                        {{ form.content(class="form-control", rows="10", placeholder="Write your post content here...") }}
-                        {% if form.content.errors %}
-                            {% for error in form.content.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        {{ form.is_published(class="form-check-input") }}
-                        {{ form.is_published.label(class="form-check-label") }}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Dashboard
-                        </a>
-                        {{ form.submit(class="btn btn-success") }}
-                    </div>
-                </form>
+                {% endif %}
             </div>
-        </div>
+
+            <div class="publish-info">
+                <div class="publish-info-text">
+                    <strong>Publishing Options:</strong>
+                </div>
+                <div class="publish-info-text">
+                    • Check the box below to publish your post immediately after creation
+                </div>
+                <div class="publish-info-text">
+                    • Leave unchecked to save as draft for later publishing
+                </div>
+            </div>
+
+            <div class="form-check">
+                {{ form.is_published(class="form-check-input", id="publishCheck") }}
+                {{ form.is_published.label(class="form-check-label", for="publishCheck") }}
+                <div class="ms-auto">
+                    <span class="badge bg-success" id="publishBadge" style="display: none;">
+                        <i class="fas fa-globe me-1"></i>Will Publish
+                    </span>
+                    <span class="badge bg-warning" id="draftBadge">
+                        <i class="fas fa-save me-1"></i>Save as Draft
+                    </span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div>
+                    {{ form.submit(class="btn btn-primary", value="Create Post") }}
+                </div>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+// Toggle publish/draft badges
+document.addEventListener('DOMContentLoaded', function() {
+    const publishCheck = document.getElementById('publishCheck');
+    const publishBadge = document.getElementById('publishBadge');
+    const draftBadge = document.getElementById('draftBadge');
+    
+    function updateBadges() {
+        if (publishCheck.checked) {
+            publishBadge.style.display = 'inline-block';
+            draftBadge.style.display = 'none';
+        } else {
+            publishBadge.style.display = 'none';
+            draftBadge.style.display = 'inline-block';
+        }
+    }
+    
+    publishCheck.addEventListener('change', updateBadges);
+    updateBadges(); // Initial call
+});
+</script>
 {% endblock %}
