@@ -47,6 +47,25 @@ class User(UserMixin, db.Model):
             'last_login': self.last_login.isoformat() if self.last_login else None
         }
 
+class Category(db.Model):
+    __tablename__ = 'categories'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    posts = db.relationship('Post', backref='category', lazy=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'post_count': len(self.posts)
+        }
+
 class Post(db.Model):
     __tablename__ = 'posts'
     
@@ -58,8 +77,9 @@ class Post(db.Model):
     is_published = db.Column(db.Boolean, default=True)
     views = db.Column(db.Integer, default=0)
     
-    # Foreign Key
+    # Foreign Keys
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     
     def to_dict(self):
         """Convert post to dictionary"""
