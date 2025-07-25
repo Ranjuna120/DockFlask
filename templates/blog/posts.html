@@ -23,11 +23,9 @@
             </div>
             <select class="filter-dropdown" id="categoryFilter">
                 <option value="">All Categories</option>
-                <option value="technology">Technology</option>
-                <option value="science">Science</option>
-                <option value="lifestyle">Lifestyle</option>
-                <option value="business">Business</option>
-                <option value="health">Health</option>
+                {% for category in categories %}
+                <option value="{{ category.name.lower() }}">{{ category.name }}</option>
+                {% endfor %}
             </select>
         </div>
 
