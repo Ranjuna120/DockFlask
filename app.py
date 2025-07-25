@@ -7,8 +7,8 @@ import threading
 import time
 from datetime import datetime
 from config import config
-from models import db, User, Post, SystemLog, Category
-from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm
+from models import db, User, Post, SystemLog, Category, Comment, PostReaction
+from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm, CommentForm
 
 # Log system actions
 def log_action(action, details=None):
@@ -167,10 +167,17 @@ def dashboard():
     user_posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.created_at.desc()).all()
     recent_activity = SystemLog.query.filter_by(user_id=current_user.id).order_by(SystemLog.timestamp.desc()).limit(10).all()
     
+    # Calculate comment statistics
+    user_comments = Comment.query.filter_by(user_id=current_user.id).count()
+    total_comments_on_user_posts = Comment.query.join(Post).filter(Post.user_id == current_user.id).count()
+    
     stats = {
         'total_posts': len(user_posts),
         'published_posts': len([p for p in user_posts if p.is_published]),
         'total_views': sum(p.views for p in user_posts),
+        'total_comments': user_comments,  # Comments by this user
+        'comments_received': total_comments_on_user_posts,  # Comments on this user's posts
+        'total_users': User.query.count(),  # Add total users count
         'recent_posts': user_posts[:5]
     }
     
@@ -209,7 +216,7 @@ def posts():
         categories = Category.query.all()
         return render_template('blog/posts.html', posts=posts_list, pagination=None, categories=categories)
 
-@app.route('/post/<int:id>')
+@app.route('/post/<int:id>', methods=['GET', 'POST'])
 def post_detail(id):
     post = Post.query.get_or_404(id)
     if not post.is_published and (not current_user.is_authenticated or current_user.id != post.user_id):
@@ -219,7 +226,23 @@ def post_detail(id):
     post.views += 1
     db.session.commit()
     
-    return render_template('blog/post_detail.html', post=post)
+    # Get comments for this post
+    comments = Comment.query.filter_by(post_id=id, is_approved=True).order_by(Comment.created_at.desc()).all()
+    
+    # Comment form
+    comment_form = CommentForm()
+    if comment_form.validate_on_submit() and current_user.is_authenticated:
+        comment = Comment(
+            content=comment_form.content.data,
+            user_id=current_user.id,
+            post_id=id
+        )
+        db.session.add(comment)
+        db.session.commit()
+        flash('Your comment has been posted!', 'success')
+        return redirect(url_for('post_detail', id=id))
+    
+    return render_template('blog/post_detail.html', post=post, comments=comments, comment_form=comment_form)
 
 @app.route('/create_post', methods=['GET', 'POST'])
 @login_required
@@ -297,6 +320,166 @@ def delete_post(id):
     
     flash(f'Post "{post_title}" has been deleted successfully!', 'success')
     return redirect(url_for('posts'))
+
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    # Get the comment
+    comment = Comment.query.get_or_404(comment_id)
+    
+    # Check if user is the author of the comment or an admin
+    if comment.user_id != current_user.id and not current_user.is_admin:
+        flash('You can only delete your own comments!', 'error')
+        return redirect(url_for('post_detail', id=comment.post_id))
+    
+    post_id = comment.post_id
+    
+    # Delete the comment
+    db.session.delete(comment)
+    db.session.commit()
+    
+    flash('Comment deleted successfully!', 'success')
+    return redirect(url_for('post_detail', id=post_id))
+
+@app.route('/api/comments')
+@login_required
+def get_comments():
+    filter_type = request.args.get('filter', 'all')
+    sort_type = request.args.get('sort', 'newest')
+    
+    # Base query
+    query = Comment.query.join(Post).join(User)
+    
+    # Apply filters
+    if filter_type == 'my-posts':
+        query = query.filter(Post.author_id == current_user.id)
+    elif filter_type == 'my-comments':
+        query = query.filter(Comment.user_id == current_user.id)
+    elif filter_type == 'pending':
+        # For future use if comment approval is implemented
+        query = query.filter(Comment.is_approved == False)
+    elif filter_type == 'approved':
+        # For future use if comment approval is implemented
+        query = query.filter(Comment.is_approved == True)
+    
+    # Apply sorting
+    if sort_type == 'newest':
+        query = query.order_by(Comment.created_at.desc())
+    elif sort_type == 'oldest':
+        query = query.order_by(Comment.created_at.asc())
+    elif sort_type == 'post':
+        query = query.join(Post).order_by(Post.title.asc(), Comment.created_at.desc())
+    
+    comments = query.all()
+    
+    # Convert to JSON
+    comments_json = []
+    for comment in comments:
+        comments_json.append({
+            'id': comment.id,
+            'content': comment.content,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M'),
+            'author': {
+                'id': comment.author.id,
+                'username': comment.author.username,
+                'first_name': comment.author.first_name,
+                'last_name': comment.author.last_name
+            },
+            'post': {
+                'id': comment.post.id,
+                'title': comment.post.title
+            },
+            'can_delete': comment.user_id == current_user.id or current_user.is_admin
+        })
+    
+    return jsonify(comments_json)
+
+@app.route('/api/post/<int:post_id>/react', methods=['POST'])
+@login_required
+def toggle_post_reaction(post_id):
+    try:
+        data = request.get_json()
+        reaction_type = data.get('type')  # 'like' or 'dislike'
+        
+        if reaction_type not in ['like', 'dislike']:
+            return jsonify({'error': 'Invalid reaction type'}), 400
+        
+        post = Post.query.get_or_404(post_id)
+        
+        # Check if user already reacted to this post
+        existing_reaction = PostReaction.query.filter_by(
+            user_id=current_user.id,
+            post_id=post_id
+        ).first()
+        
+        if existing_reaction:
+            if existing_reaction.reaction_type == reaction_type:
+                # Remove reaction if same type
+                db.session.delete(existing_reaction)
+                db.session.commit()
+                action = 'removed'
+            else:
+                # Update reaction type
+                existing_reaction.reaction_type = reaction_type
+                existing_reaction.updated_at = datetime.utcnow()
+                db.session.commit()
+                action = 'updated'
+        else:
+            # Create new reaction
+            new_reaction = PostReaction(
+                user_id=current_user.id,
+                post_id=post_id,
+                reaction_type=reaction_type
+            )
+            db.session.add(new_reaction)
+            db.session.commit()
+            action = 'added'
+        
+        # Get updated reaction counts
+        likes_count = PostReaction.query.filter_by(post_id=post_id, reaction_type='like').count()
+        dislikes_count = PostReaction.query.filter_by(post_id=post_id, reaction_type='dislike').count()
+        
+        # Get current user's reaction
+        user_reaction = PostReaction.query.filter_by(
+            user_id=current_user.id,
+            post_id=post_id
+        ).first()
+        
+        return jsonify({
+            'success': True,
+            'action': action,
+            'likes_count': likes_count,
+            'dislikes_count': dislikes_count,
+            'user_reaction': user_reaction.reaction_type if user_reaction else None
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/post/<int:post_id>/reactions')
+def get_post_reactions(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        
+        likes_count = PostReaction.query.filter_by(post_id=post_id, reaction_type='like').count()
+        dislikes_count = PostReaction.query.filter_by(post_id=post_id, reaction_type='dislike').count()
+        
+        user_reaction = None
+        if current_user.is_authenticated:
+            reaction = PostReaction.query.filter_by(
+                user_id=current_user.id,
+                post_id=post_id
+            ).first()
+            user_reaction = reaction.reaction_type if reaction else None
+        
+        return jsonify({
+            'likes_count': likes_count,
+            'dislikes_count': dislikes_count,
+            'user_reaction': user_reaction
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
