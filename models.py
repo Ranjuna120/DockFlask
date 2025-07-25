@@ -115,3 +115,61 @@ class SystemLog(db.Model):
             'timestamp': self.timestamp.isoformat(),
             'details': self.details
         }
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True)  # For reply functionality
+    is_approved = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    author = db.relationship('User', backref='comments')
+    post = db.relationship('Post', backref='comments')
+    replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'content': self.content,
+            'user_id': self.user_id,
+            'post_id': self.post_id,
+            'parent_id': self.parent_id,
+            'is_approved': self.is_approved,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'author_name': self.author.get_full_name() if self.author else 'Unknown',
+            'replies_count': self.replies.count()
+        }
+
+class PostReaction(db.Model):
+    __tablename__ = 'post_reactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    reaction_type = db.Column(db.String(10), nullable=False)  # 'like' or 'dislike'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='post_reactions')
+    post = db.relationship('Post', backref='reactions')
+    
+    # Unique constraint to prevent duplicate reactions from same user on same post
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_reaction'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'post_id': self.post_id,
+            'reaction_type': self.reaction_type,
+            'created_at': self.created_at.isoformat(),
+            'user_name': self.user.get_full_name() if self.user else 'Unknown'
+        }
