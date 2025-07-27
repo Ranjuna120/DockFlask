@@ -34,6 +34,14 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('about') }}">About</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('faq') }}">FAQ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ask_question') }}">
+                            <i class="fas fa-question-circle me-1"></i>Ask Question
+                        </a>
+                    </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
@@ -113,6 +121,7 @@
                         <li><a href="{{ url_for('home') }}">Home</a></li>
                         <li><a href="{{ url_for('posts') }}">Blog Posts</a></li>
                         <li><a href="{{ url_for('about') }}">About</a></li>
+                        <li><a href="{{ url_for('faq') }}">FAQ</a></li>
                         {% if current_user.is_authenticated %}
                         <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
                         {% endif %}
