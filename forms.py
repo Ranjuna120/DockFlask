@@ -53,3 +53,19 @@ class ChangePasswordForm(FlaskForm):
 class CommentForm(FlaskForm):
     content = TextAreaField('Your Comment', validators=[DataRequired(), Length(min=5, max=500)])
     submit = SubmitField('Post Comment')
+
+class QuestionSubmissionForm(FlaskForm):
+    name = StringField('Your Name', validators=[DataRequired(), Length(min=2, max=100)])
+    email = StringField('Email Address', validators=[DataRequired(), Email()])
+    subject = StringField('Subject', validators=[DataRequired(), Length(min=5, max=200)])
+    category = SelectField('Category', choices=[
+        ('General', 'General'),
+        ('Technical', 'Technical Support'), 
+        ('Account', 'Account Issues'),
+        ('Billing', 'Billing & Payment'),
+        ('Feature', 'Feature Request'),
+        ('Bug', 'Bug Report'),
+        ('Other', 'Other')
+    ], default='General')
+    question = TextAreaField('Your Question', validators=[DataRequired(), Length(min=10, max=2000)])
+    submit = SubmitField('Submit Question')
