@@ -135,6 +135,25 @@
                     Manage Comments
                 </div>
             </div>
+
+            {% if current_user.is_admin %}
+            <div class="action-card admin">
+                <div class="action-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h3 class="action-title">Manage Questions</h3>
+                <p class="action-description">Review and respond to user questions, manage FAQ content, and provide support.</p>
+                <div class="admin-stats mb-3">
+                    <div class="admin-stat">
+                        <span class="stat-label">Pending Questions</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('admin_questions') }}" class="action-button">
+                    <i class="fas fa-tasks"></i>
+                    Manage Questions
+                </a>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Comment Filter Modal -->
