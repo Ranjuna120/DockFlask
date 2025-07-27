@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Working Buttons</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .question-box {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+        .working { background-color: #d4edda !important; }
+        .deleting { background-color: #f8d7da !important; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>🎯 Simple Working Buttons Test</h2>
+        
+        <div class="alert alert-info">
+            <strong>Status:</strong> <span id="status">Ready to test buttons</span>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col">
+                <button class="btn btn-primary" onclick="loginFirst()">
+                    🔐 Step 1: Login as Admin
+                </button>
+                <button class="btn btn-success ms-2" onclick="loadQuestions()">
+                    📋 Step 2: Load Questions
+                </button>
+                <button class="btn btn-warning ms-2" onclick="testDelete()">
+                    🗑️ Step 3: Test Delete
+                </button>
+            </div>
+        </div>
+        
+        <div id="questions-area">
+            <p>Click "Load Questions" to see available questions...</p>
+        </div>
+        
+        <div id="messages" class="mt-3"></div>
+    </div>
+
+    <script>
+        function showMessage(msg, type = 'info') {
+            document.getElementById('messages').innerHTML = 
+                `<div class="alert alert-${type}">${msg}</div>`;
+            console.log(msg);
+        }
+        
+        function updateStatus(status) {
+            document.getElementById('status').textContent = status;
+        }
+        
+        function loginFirst() {
+            showMessage('🔐 Opening login page...', 'info');
+            updateStatus('Opening login page...');
+            window.open('/login', '_blank');
+            setTimeout(() => {
+                showMessage('✅ Login in the new tab with: admin / admin123', 'success');
+                updateStatus('Login with admin/admin123 in the new tab');
+            }, 1000);
+        }
+        
+        async function loadQuestions() {
+            updateStatus('Loading questions...');
+            showMessage('📋 Loading questions from database...', 'info');
+            
+            try {
+                const response = await fetch('/api/questions', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    showMessage('❌ Not logged in! Please login as admin first.', 'danger');
+                    updateStatus('Not logged in - please login first');
+                    return;
+                }
+                
+                if (response.status === 403) {
+                    showMessage('❌ Access denied! Need admin privileges.', 'danger');
+                    updateStatus('Access denied - need admin privileges');
+                    return;
+                }
+                
+                const questions = await response.json();
+                
+                let html = '<h4>📋 Available Questions:</h4>';
+                if (questions && questions.length > 0) {
+                    questions.forEach(q => {
+                        html += `
+                            <div class="question-box" id="question-${q.id}">
+                                <strong>ID ${q.id}:</strong> ${q.subject}<br>
+                                <small>By: ${q.name} | Status: ${q.status}</small><br>
+                                <button class="btn btn-sm btn-danger mt-2" onclick="deleteQuestionSimple(${q.id})">
+                                    🗑️ Delete Question ${q.id}
+                                </button>
+                                <button class="btn btn-sm btn-success mt-2 ms-2" onclick="answerQuestionSimple(${q.id})">
+                                    💬 Quick Answer
+                                </button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p class="text-muted">No questions found.</p>';
+                }
+                
+                document.getElementById('questions-area').innerHTML = html;
+                showMessage('✅ Questions loaded successfully!', 'success');
+                updateStatus('Questions loaded - buttons ready to use');
+                
+            } catch (error) {
+                showMessage('❌ Error loading questions: ' + error.message, 'danger');
+                updateStatus('Error loading questions');
+            }
+        }
+        
+        async function deleteQuestionSimple(questionId) {
+            if (!confirm(`Are you sure you want to delete question ${questionId}?`)) {
+                return;
+            }
+            
+            updateStatus(`Deleting question ${questionId}...`);
+            showMessage(`🗑️ Deleting question ${questionId}...`, 'warning');
+            
+            // Mark as deleting
+            const questionBox = document.getElementById(`question-${questionId}`);
+            if (questionBox) {
+                questionBox.classList.add('deleting');
+            }
+            
+            try {
+                const response = await fetch(`/api/questions/${questionId}/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                console.log(`Delete response status: ${response.status}`);
+                
+                if (response.status === 401) {
+                    showMessage('❌ Not logged in! Please login as admin first.', 'danger');
+                    updateStatus('Not logged in - please login first');
+                    if (questionBox) questionBox.classList.remove('deleting');
+                    return;
+                }
+                
+                if (response.status === 403) {
+                    showMessage('❌ Access denied! Need admin privileges.', 'danger');
+                    updateStatus('Access denied - need admin privileges');
+                    if (questionBox) questionBox.classList.remove('deleting');
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('Delete result:', result);
+                
+                if (response.status === 200 && result.success) {
+                    showMessage(`✅ Question ${questionId} deleted successfully!`, 'success');
+                    updateStatus(`Question ${questionId} deleted successfully`);
+                    
+                    // Remove the question box with animation
+                    if (questionBox) {
+                        questionBox.style.transition = 'opacity 0.5s ease';
+                        questionBox.style.opacity = '0';
+                        setTimeout(() => {
+                            questionBox.remove();
+                        }, 500);
+                    }
+                } else {
+                    showMessage(`❌ Delete failed: ${result.message || 'Unknown error'}`, 'danger');
+                    updateStatus(`Delete failed: ${result.message || 'Unknown error'}`);
+                    if (questionBox) questionBox.classList.remove('deleting');
+                }
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage(`❌ Network error: ${error.message}`, 'danger');
+                updateStatus(`Network error: ${error.message}`);
+                if (questionBox) questionBox.classList.remove('deleting');
+            }
+        }
+        
+        async function answerQuestionSimple(questionId) {
+            const answer = prompt(`Enter your answer for question ${questionId}:`);
+            if (!answer || !answer.trim()) {
+                return;
+            }
+            
+            updateStatus(`Answering question ${questionId}...`);
+            showMessage(`💬 Sending answer for question ${questionId}...`, 'info');
+            
+            try {
+                const response = await fetch(`/api/questions/${questionId}/answer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        answer: answer.trim(),
+                        make_public: false
+                    })
+                });
+                
+                if (response.status === 401) {
+                    showMessage('❌ Not logged in! Please login as admin first.', 'danger');
+                    updateStatus('Not logged in - please login first');
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`✅ Answer sent for question ${questionId}!`, 'success');
+                    updateStatus(`Answer sent for question ${questionId}`);
+                    
+                    // Mark question as working
+                    const questionBox = document.getElementById(`question-${questionId}`);
+                    if (questionBox) {
+                        questionBox.classList.add('working');
+                        questionBox.innerHTML += '<br><small class="text-success">✅ Answered!</small>';
+                    }
+                } else {
+                    showMessage(`❌ Answer failed: ${result.message}`, 'danger');
+                    updateStatus(`Answer failed: ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('Answer error:', error);
+                showMessage(`❌ Network error: ${error.message}`, 'danger');
+                updateStatus(`Network error: ${error.message}`);
+            }
+        }
+        
+        function testDelete() {
+            showMessage('🧪 Testing delete function...', 'info');
+            updateStatus('Testing delete function...');
+            
+            // Test with a simple question ID
+            if (confirm('This will test deleting question ID 1. Continue?')) {
+                deleteQuestionSimple(1);
+            }
+        }
+        
+        // Auto-load questions on page load
+        window.addEventListener('load', function() {
+            console.log('🚀 Simple button interface loaded');
+            updateStatus('Interface loaded - ready to test');
+            
+            // Check if already logged in
+            fetch('/admin/questions')
+                .then(response => {
+                    if (response.status === 200) {
+                        showMessage('✅ Already logged in as admin!', 'success');
+                        updateStatus('Already logged in as admin');
+                        loadQuestions();
+                    } else {
+                        showMessage('⚠️ Please login as admin first', 'warning');
+                        updateStatus('Please login as admin first');
+                    }
+                })
+                .catch(error => {
+                    showMessage('⚠️ Please login as admin first', 'warning');
+                    updateStatus('Please login as admin first');
+                });
+        });
+    </script>
+</body>
+</html>
