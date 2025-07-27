@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from config import config
 from models import db, User, Post, SystemLog, Category, Comment, PostReaction
-from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm, CommentForm
+from forms import LoginForm, RegistrationForm, PostForm, EditProfileForm, ChangePasswordForm, CommentForm, QuestionSubmissionForm
 
 # Log system actions
 def log_action(action, details=None):
@@ -603,6 +603,383 @@ def stats():
 def about():
     return render_template('about.html')
 
+@app.route('/faq')
+def faq():
+    # Import here to avoid circular imports
+    import sqlite3
+    
+    try:
+        # Connect to database and get FAQs
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        # Get all active FAQs ordered by category and display_order
+        cursor.execute("""
+            SELECT question, answer, category, display_order 
+            FROM faqs 
+            WHERE is_active = 1 
+            ORDER BY category, display_order, id
+        """)
+        
+        faqs_data = cursor.fetchall()
+        conn.close()
+        
+        # Group FAQs by category
+        faqs_by_category = {}
+        categories = set()
+        
+        for question, answer, category, display_order in faqs_data:
+            if category not in faqs_by_category:
+                faqs_by_category[category] = []
+            
+            faqs_by_category[category].append({
+                'question': question,
+                'answer': answer,
+                'display_order': display_order
+            })
+            categories.add(category)
+        
+        total_faqs = len(faqs_data)
+        categories = sorted(list(categories))
+        
+        return render_template('faq.html', 
+                             faqs_by_category=faqs_by_category,
+                             categories=categories,
+                             total_faqs=total_faqs)
+        
+    except Exception as e:
+        print(f"Error loading FAQs: {e}")
+        # Fallback empty data
+        return render_template('faq.html', 
+                             faqs_by_category={},
+                             categories=[],
+                             total_faqs=0)
+
+@app.route('/ask-question', methods=['GET', 'POST'])
+def ask_question():
+    form = QuestionSubmissionForm()
+    
+    if form.validate_on_submit():
+        # Import here to avoid circular imports
+        import sqlite3
+        
+        try:
+            # Connect to database and insert question
+            conn = sqlite3.connect('instance/dockflask.db')
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO user_questions (name, email, subject, question, category, status, created_at)
+                VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+            ''', (form.name.data, form.email.data, form.subject.data, 
+                  form.question.data, form.category.data))
+            
+            conn.commit()
+            conn.close()
+            
+            # Log the action
+            log_action('question_submitted', f'Question submitted by {form.name.data}: {form.subject.data}')
+            
+            flash('Your question has been submitted successfully! We will get back to you soon.', 'success')
+            return redirect(url_for('ask_question'))
+            
+        except Exception as e:
+            print(f"Error submitting question: {e}")
+            flash('There was an error submitting your question. Please try again.', 'danger')
+    
+    return render_template('ask_question.html', form=form)
+
+@app.route('/admin/questions')
+@login_required
+def admin_questions():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Import here to avoid circular imports
+    import sqlite3
+    
+    try:
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        # Get filter parameters
+        status_filter = request.args.get('status', 'all')
+        category_filter = request.args.get('category', 'all')
+        
+        # Build query
+        query = '''
+            SELECT id, name, email, subject, question, category, status, is_public, 
+                   answer, answered_by, answered_at, created_at
+            FROM user_questions
+            WHERE 1=1
+        '''
+        params = []
+        
+        if status_filter != 'all':
+            query += ' AND status = ?'
+            params.append(status_filter)
+            
+        if category_filter != 'all':
+            query += ' AND category = ?'
+            params.append(category_filter)
+            
+        query += ' ORDER BY created_at DESC'
+        
+        cursor.execute(query, params)
+        questions_data = cursor.fetchall()
+        
+        # Get statistics
+        cursor.execute('SELECT status, COUNT(*) FROM user_questions GROUP BY status')
+        stats = dict(cursor.fetchall())
+        
+        conn.close()
+        
+        # Format questions
+        questions = []
+        for row in questions_data:
+            questions.append({
+                'id': row[0],
+                'name': row[1],
+                'email': row[2],
+                'subject': row[3],
+                'question': row[4],
+                'category': row[5],
+                'status': row[6],
+                'is_public': bool(row[7]),
+                'answer': row[8],
+                'answered_by': row[9],
+                'answered_at': row[10],
+                'created_at': row[11]
+            })
+        
+        return render_template('admin/questions.html', 
+                             questions=questions,
+                             stats=stats,
+                             status_filter=status_filter,
+                             category_filter=category_filter)
+        
+    except Exception as e:
+        print(f"Error loading questions: {e}")
+        flash('Error loading questions.', 'danger')
+        return redirect(url_for('dashboard'))
+
+# API Routes for Question Management
+@app.route('/api/questions/<int:question_id>/answer', methods=['POST'])
+@login_required
+def answer_question(question_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        answer = data.get('answer', '').strip()
+        make_public = data.get('make_public', False)
+        
+        if not answer:
+            return jsonify({'success': False, 'message': 'Answer is required'}), 400
+        
+        # Import here to avoid circular imports
+        import sqlite3
+        
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        # Update the question with answer
+        cursor.execute('''
+            UPDATE user_questions 
+            SET answer = ?, status = 'answered', is_public = ?, 
+                answered_by = ?, answered_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (answer, 1 if make_public else 0, current_user.id, question_id))
+        
+        # If make_public is True, also add to FAQ table
+        if make_public:
+            # Get the question details first
+            cursor.execute('SELECT subject, question, category FROM user_questions WHERE id = ?', (question_id,))
+            question_data = cursor.fetchone()
+            
+            if question_data:
+                subject, question_text, category = question_data
+                
+                # Add to FAQ table
+                cursor.execute('''
+                    INSERT INTO faqs (question, answer, category, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ''', (subject, answer, category))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log the action
+        log_action('question_answered', f'Answered question ID: {question_id}')
+        
+        return jsonify({'success': True, 'message': 'Question answered successfully'})
+        
+    except Exception as e:
+        print(f"Error answering question: {e}")
+        return jsonify({'success': False, 'message': 'Error answering question'}), 500
+
+@app.route('/api/questions/<int:question_id>/make-public', methods=['POST'])
+@login_required
+def make_question_public(question_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        import sqlite3
+        
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        # Get question details
+        cursor.execute('''
+            SELECT subject, question, answer, category, status 
+            FROM user_questions 
+            WHERE id = ? AND status = 'answered'
+        ''', (question_id,))
+        
+        question_data = cursor.fetchone()
+        
+        if not question_data:
+            return jsonify({'success': False, 'message': 'Question not found or not answered'}), 404
+        
+        subject, question_text, answer, category, status = question_data
+        
+        # Add to FAQ table
+        cursor.execute('''
+            INSERT INTO faqs (question, answer, category, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ''', (subject, answer, category))
+        
+        # Update user question to mark as public
+        cursor.execute('''
+            UPDATE user_questions 
+            SET is_public = 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (question_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log the action
+        log_action('question_made_public', f'Made question ID {question_id} public as FAQ')
+        
+        return jsonify({'success': True, 'message': 'Question added to public FAQ'})
+        
+    except Exception as e:
+        print(f"Error making question public: {e}")
+        return jsonify({'success': False, 'message': 'Error making question public'}), 500
+
+@app.route('/api/questions/<int:question_id>/archive', methods=['POST'])
+@login_required
+def archive_question(question_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        import sqlite3
+        
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE user_questions 
+            SET status = 'archived', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (question_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log the action
+        log_action('question_archived', f'Archived question ID: {question_id}')
+        
+        return jsonify({'success': True, 'message': 'Question archived successfully'})
+        
+    except Exception as e:
+        print(f"Error archiving question: {e}")
+        return jsonify({'success': False, 'message': 'Error archiving question'}), 500
+
+@app.route('/api/questions/<int:question_id>/delete', methods=['DELETE'])
+@login_required
+def delete_question(question_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        import sqlite3
+        
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        # Get question details for logging before deletion
+        cursor.execute('SELECT subject, name FROM user_questions WHERE id = ?', (question_id,))
+        question_data = cursor.fetchone()
+        
+        cursor.execute('DELETE FROM user_questions WHERE id = ?', (question_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log the action
+        if question_data:
+            subject, name = question_data
+            log_action('question_deleted', f'Deleted question "{subject}" by {name}')
+        
+        return jsonify({'success': True, 'message': 'Question deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting question: {e}")
+        return jsonify({'success': False, 'message': 'Error deleting question'}), 500
+
+@app.route('/api/questions/<int:question_id>', methods=['GET'])
+@login_required
+def get_question_details(question_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        import sqlite3
+        
+        conn = sqlite3.connect('instance/dockflask.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, email, subject, question, category, status, 
+                   is_public, answer, answered_by, answered_at, created_at
+            FROM user_questions 
+            WHERE id = ?
+        ''', (question_id,))
+        
+        question_data = cursor.fetchone()
+        conn.close()
+        
+        if not question_data:
+            return jsonify({'success': False, 'message': 'Question not found'}), 404
+        
+        question = {
+            'id': question_data[0],
+            'name': question_data[1],
+            'email': question_data[2],
+            'subject': question_data[3],
+            'question': question_data[4],
+            'category': question_data[5],
+            'status': question_data[6],
+            'is_public': bool(question_data[7]),
+            'answer': question_data[8],
+            'answered_by': question_data[9],
+            'answered_at': question_data[10],
+            'created_at': question_data[11]
+        }
+        
+        return jsonify({'success': True, 'question': question})
+        
+    except Exception as e:
+        print(f"Error getting question details: {e}")
+        return jsonify({'success': False, 'message': 'Error getting question details'}), 500
+
 # API Routes and other routes continue here...
 
 def open_browser():
@@ -641,26 +1018,12 @@ if __name__ == '__main__':
             else:
                 print("✅ Admin user verified: username=admin, password=admin123")
         
-        # Create sample categories if they don't exist
-        if Category.query.count() == 0:
-            categories = [
-                Category(name='Technology', description='Posts about technology, programming, and software development'),
-                Category(name='Lifestyle', description='Posts about daily life, tips, and personal experiences'),
-                Category(name='Business', description='Posts about business, entrepreneurship, and career'),
-                Category(name='Travel', description='Posts about travel experiences and destinations'),
-                Category(name='Food', description='Posts about cooking, recipes, and food reviews'),
-                Category(name='Health', description='Posts about health, fitness, and wellness'),
-                Category(name='Education', description='Posts about learning, tutorials, and educational content'),
-                Category(name='Entertainment', description='Posts about movies, music, games, and entertainment'),
-            ]
-            
-            for category in categories:
-                db.session.add(category)
-            
-            db.session.commit()
-            print("✅ Sample categories created!")
+        # Check if categories exist
+        category_count = Category.query.count()
+        if category_count == 0:
+            print("⚠️ No categories found in database. Categories can be added through admin interface.")
         else:
-            print("✅ Categories already exist in database")
+            print(f"✅ Found {category_count} categories in database")
     
     print("🚀 Starting Flask app with auto-reload enabled...")
     print("🔄 Files will be automatically reloaded when changed")
