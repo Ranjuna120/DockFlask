@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}">
+<style>
+.faq-container {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.faq-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+}
+
+.faq-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.faq-subtitle {
+    font-size: 1.2rem;
+    color: #a8b2d1;
+    margin-bottom: 2rem;
+}
+
+.faq-search {
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.faq-search input {
+    width: 100%;
+    padding: 15px 50px 15px 20px;
+    border: none;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 1rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.faq-search input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.faq-search i {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.faq-categories {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.category-btn {
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: #ffffff;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.category-btn:hover,
+.category-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.faq-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-section {
+    margin-bottom: 2rem;
+}
+
+.faq-section-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    border-left: 4px solid #667eea;
+}
+
+.faq-item {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.faq-question {
+    padding: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.faq-question:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.faq-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    color: #667eea;
+}
+
+.faq-answer {
+    padding: 0 1.5rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    color: #a8b2d1;
+    line-height: 1.6;
+}
+
+.faq-answer.active {
+    padding: 0 1.5rem 1.5rem;
+    max-height: 500px;
+}
+
+.faq-item.active .faq-icon {
+    transform: rotate(180deg);
+}
+
+.faq-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 3rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.faq-stat {
+    text-align: center;
+}
+
+.faq-stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.faq-stat-label {
+    color: #a8b2d1;
+    font-size: 0.9rem;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #a8b2d1;
+}
+
+.no-results i {
+    font-size: 3rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .faq-title {
+        font-size: 2rem;
+    }
+    
+    .faq-categories {
+        justify-content: center;
+    }
+    
+    .category-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .faq-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block title %}FAQ - Frequently Asked Questions - DockFlask{% endblock %}
+
+{% block content %}
+<div class="faq-container">
+    <div class="container">
+        <!-- FAQ Header -->
+        <div class="faq-header">
+            <h1 class="faq-title">❓ Frequently Asked Questions</h1>
+            <p class="faq-subtitle">Find answers to common questions about DockFlask</p>
+            
+            <!-- Search Box -->
+            <div class="faq-search">
+                <input type="text" id="faqSearch" placeholder="Search for answers...">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="faq-categories">
+            <button class="category-btn active" data-category="all">All Questions</button>
+            {% for category in categories %}
+            <button class="category-btn" data-category="{{ category.lower() }}">{{ category }}</button>
+            {% endfor %}
+        </div>
+
+        <!-- FAQ Content -->
+        <div class="faq-content">
+            {% for category, faqs in faqs_by_category.items() %}
+            <div class="faq-section" data-category="{{ category.lower() }}">
+                <h2 class="faq-section-title">{{ category }}</h2>
+                
+                {% for faq in faqs %}
+                <div class="faq-item" data-category="{{ category.lower() }}">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>{{ faq.question }}</span>
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>{{ faq.answer }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            
+            <!-- No Results Message -->
+            <div class="no-results" id="noResults" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h3>No results found</h3>
+                <p>Try searching with different keywords or browse all categories.</p>
+            </div>
+        </div>
+
+        <!-- FAQ Statistics -->
+        <div class="faq-stats">
+            <div class="faq-stat">
+                <span class="faq-stat-number">{{ total_faqs }}</span>
+                <span class="faq-stat-label">Total Questions</span>
+            </div>
+            <div class="faq-stat">
+                <span class="faq-stat-number">{{ categories|length }}</span>
+                <span class="faq-stat-label">Categories</span>
+            </div>
+            <div class="faq-stat">
+                <span class="faq-stat-number">24/7</span>
+                <span class="faq-stat-label">Available</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('faqSearch');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const faqItems = document.querySelectorAll('.faq-item');
+    const faqSections = document.querySelectorAll('.faq-section');
+    const noResults = document.getElementById('noResults');
+    
+    let currentCategory = 'all';
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterFAQs(searchTerm, currentCategory);
+    });
+
+    // Category filter functionality
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active button
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            currentCategory = this.dataset.category;
+            const searchTerm = searchInput.value.toLowerCase();
+            filterFAQs(searchTerm, currentCategory);
+        });
+    });
+
+    function filterFAQs(searchTerm, category) {
+        let visibleCount = 0;
+
+        // Hide all sections first
+        faqSections.forEach(section => {
+            section.style.display = 'none';
+        });
+
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+            const answer = item.querySelector('.faq-answer p').textContent.toLowerCase();
+            const itemCategory = item.dataset.category;
+            
+            const matchesSearch = question.includes(searchTerm) || answer.includes(searchTerm);
+            const matchesCategory = category === 'all' || itemCategory === category;
+            
+            if (matchesSearch && matchesCategory) {
+                item.style.display = 'block';
+                // Show the parent section
+                item.closest('.faq-section').style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+    }
+
+    // Scroll animation
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    faqItems.forEach(item => {
+        observer.observe(item);
+    });
+});
+
+function toggleFAQ(element) {
+    const faqItem = element.parentElement;
+    const answer = element.nextElementSibling;
+    
+    // Close other open FAQs (optional - remove if you want multiple open)
+    document.querySelectorAll('.faq-item.active').forEach(item => {
+        if (item !== faqItem) {
+            item.classList.remove('active');
+            item.querySelector('.faq-answer').classList.remove('active');
+        }
+    });
+    
+    // Toggle current FAQ
+    faqItem.classList.toggle('active');
+    answer.classList.toggle('active');
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
