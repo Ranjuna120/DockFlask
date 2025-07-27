@@ -198,21 +198,7 @@ INSERT INTO app_settings (key_name, value, description) VALUES
 ('allow_registration', 'true', 'Whether new user registration is allowed'),
 ('require_email_verification', 'false', 'Whether email verification is required for new users');
 
--- Insert Sample Blog Post
-INSERT INTO posts (title, content, user_id, is_published) VALUES 
-('Welcome to DockFlask Pro!', 
-'This is your first blog post in DockFlask Pro. You can create, edit, and manage your blog posts through the dashboard. 
-
-Features included:
-- User authentication and management
-- Blog post creation and management  
-- MySQL database integration
-- Responsive Bootstrap UI
-- RESTful APIs
-- Docker containerization
-
-Start exploring and creating amazing content!', 
-1, TRUE);
+-- Database is ready for real content
 
 -- Create Views for Analytics
 CREATE VIEW user_post_stats AS
