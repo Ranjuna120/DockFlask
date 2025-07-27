@@ -26,6 +26,7 @@
 - **👍 Post Reactions** - Like/dislike system with real-time counters
 - **🖼️ Image Uploads** - Featured image support with automatic resizing
 - **🔍 Search & Filtering** - Advanced search with category filters
+- **❓ FAQ System** - Comprehensive help section with categorized questions
 - **📊 Analytics Dashboard** - Comprehensive admin dashboard with statistics
 
 ### 🎨 User Experience
