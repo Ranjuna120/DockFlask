@@ -6,12 +6,17 @@ services:
     container_name: dockflask-app
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=production
       - PORT=5000
     volumes:
-      - .:/app
+      # For production, use named volume for uploads only
+      - uploads_data:/app/static/uploads
     restart: unless-stopped
+    depends_on:
+      - mysql
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
@@ -24,6 +29,8 @@ services:
     container_name: dockflask-dev
     ports:
       - "5001:5000"
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=development
       - PORT=5000
@@ -32,3 +39,21 @@ services:
     command: python app.py
     profiles:
       - dev
+
+  mysql:
+    image: mysql:8.0
+    container_name: dockflask-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: dockflask
+      MYSQL_USER: dockuser
+      MYSQL_PASSWORD: dockpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+  uploads_data:
