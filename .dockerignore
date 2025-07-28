@@ -28,6 +28,16 @@ coverage.xml
 .pytest_cache
 .hypothesis
 
+# Migrations cache
+migrations/__pycache__/
+
+# Database files
+*.db
+*.sqlite3
+
+# Static uploads (if not needed in build)
+static/uploads/
+
 # Virtual environments
 .env
 .venv
