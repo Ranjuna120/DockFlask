@@ -240,6 +240,90 @@
 .fade-in-up:nth-child(2) { animation-delay: 0.1s; }
 .fade-in-up:nth-child(3) { animation-delay: 0.2s; }
 .fade-in-up:nth-child(4) { animation-delay: 0.3s; }
+
+.tech-stack-section {
+    margin: 2rem 0;
+}
+
+.tech-stack-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 1rem;
+}
+.tech-stack-btn {
+  display: inline-block;
+  background: linear-gradient(90deg, #232946 60%, #353a50 100%);
+  color: #ffd43b;
+  font-weight: 600;
+  font-size: 1.08rem;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.7rem 1.6rem;
+  margin: 0 0.2rem 0.5rem 0.2rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+  outline: none;
+}
+.tech-stack-btn:hover {
+  background: linear-gradient(90deg, #ffd43b 40%, #232946 100%);
+  color: #232946;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  transform: translateY(-2px) scale(1.04);
+}
+.tech-stack-btn.active {
+  background: linear-gradient(90deg, #ffd43b 80%, #4facfe 100%);
+  color: #232946;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  transform: scale(1.07);
+}
+
+.tech-info-box {
+  margin-top: 1.5rem;
+  background: #232946;
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2rem 2.5rem;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  transition: box-shadow 0.2s, background 0.2s;
+  border: 1px solid #353a50;
+  min-width: 320px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0;
+  animation: fadeInTechBox 0.4s forwards;
+}
+.tech-info-box h4 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+  color: #ffd43b;
+}
+.tech-info-box ul {
+  margin-top: 1.2rem;
+  margin-bottom: 0;
+  padding-left: 1.2rem;
+}
+.tech-info-box li {
+  margin-bottom: 0.5rem;
+}
+.tech-info-box a {
+  color: #4facfe;
+  font-weight: 500;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.tech-info-box a:hover {
+  color: #ffd43b;
+}
+@keyframes fadeInTechBox {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>
 {% endblock %}
 
@@ -422,6 +506,25 @@
         </div>
     </div>
 
+    <!-- Interactive Technology Stack Section -->
+    <div class="tech-stack-section" style="margin:2rem 0;">
+      <h3 class="text-center mb-4">Technology Stack for Learn <span style="font-size:1.5rem;">🛠️</span></h3>
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <ul class="tech-stack-list" style="list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;">
+            <li class="tech-stack-btn" onclick="showTechInfo('python')">Python 3.12</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('flask')">Flask 2.3.3</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('mysql')">MySQL Database</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('docker')">Docker</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('bootstrap')">Bootstrap 5</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('css')">Modern CSS</li>
+            <li class="tech-stack-btn" onclick="showTechInfo('sqlalchemy')">SQLAlchemy</li>
+          </ul>
+          <div id="tech-info" class="tech-info-box" style="margin-top:1.5rem;display:none;opacity:0;transition:opacity 0.3s;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Quick Start Guide -->
     <div class="quick-start fade-in-up">
         <h2 class="section-title text-center mb-4">
@@ -504,5 +607,84 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+const techDescriptions = {
+  python: {
+    name: "Python 3.12",
+    desc: "Python is a modern, high-level programming language known for its readability and versatility. Used for web, data science, automation, and more.",
+    resources: [
+      { name: "Official Docs", url: "https://docs.python.org/3/" },
+      { name: "Python Tutorial", url: "https://www.w3schools.com/python/" }
+    ]
+  },
+  flask: {
+    name: "Flask 2.3.3",
+    desc: "Flask is a lightweight Python web framework for building web applications quickly and with minimal code. It is easy to learn and highly extensible.",
+    resources: [
+      { name: "Official Docs", url: "https://flask.palletsprojects.com/" },
+      { name: "Flask Mega-Tutorial", url: "https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world" }
+    ]
+  },
+  mysql: {
+    name: "MySQL Database",
+    desc: "MySQL is a popular open-source relational database management system. It is widely used for storing and managing structured data in web applications.",
+    resources: [
+      { name: "Official Docs", url: "https://dev.mysql.com/doc/" },
+      { name: "MySQL Tutorial", url: "https://www.mysqltutorial.org/" }
+    ]
+  },
+  docker: {
+    name: "Docker",
+    desc: "Docker is a platform for developing, shipping, and running applications inside containers. It helps ensure consistency across environments and simplifies deployment.",
+    resources: [
+      { name: "Official Docs", url: "https://docs.docker.com/" },
+      { name: "Docker Getting Started", url: "https://docs.docker.com/get-started/" }
+    ]
+  },
+  bootstrap: {
+    name: "Bootstrap 5",
+    desc: "Bootstrap is a popular CSS framework for building responsive and modern web interfaces quickly. It provides ready-to-use components and utilities.",
+    resources: [
+      { name: "Official Docs", url: "https://getbootstrap.com/docs/" },
+      { name: "Bootstrap Tutorial", url: "https://www.w3schools.com/bootstrap/" }
+    ]
+  },
+  css: {
+    name: "Modern CSS",
+    desc: "Modern CSS uses variables, gradients, flexbox, grid, and animations to create beautiful, responsive, and interactive web designs.",
+    resources: [
+      { name: "MDN CSS Guide", url: "https://developer.mozilla.org/en-US/docs/Web/CSS" },
+      { name: "CSS Tricks", url: "https://css-tricks.com/" }
+    ]
+  },
+  sqlalchemy: {
+    name: "SQLAlchemy",
+    desc: "SQLAlchemy is a powerful Python ORM (Object Relational Mapper) that allows you to interact with databases using Python objects instead of SQL queries.",
+    resources: [
+      { name: "Official Docs", url: "https://docs.sqlalchemy.org/" },
+      { name: "SQLAlchemy Tutorial", url: "https://docs.sqlalchemy.org/en/20/tutorial/" }
+    ]
+  }
+};
+function showTechInfo(key) {
+  const info = techDescriptions[key];
+  if (!info) return;
+  document.querySelectorAll('.tech-stack-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = Array.from(document.querySelectorAll('.tech-stack-btn')).find(btn => btn.textContent.includes(info.name.split(' ')[0]));
+  if (activeBtn) activeBtn.classList.add('active');
+  let html = `<h4>${info.name}</h4><p>${info.desc}</p><ul>`;
+  info.resources.forEach(r => {
+    html += `<li><a href="${r.url}" target="_blank">${r.name}</a></li>`;
+  });
+  html += "</ul>";
+  const infoBox = document.getElementById("tech-info");
+  infoBox.innerHTML = html;
+  infoBox.style.display = 'block';
+  infoBox.style.opacity = 0;
+  infoBox.style.animation = 'none';
+  setTimeout(() => {
+    infoBox.style.animation = 'fadeInTechBox 0.4s forwards';
+  }, 10);
+}
 </script>
 {% endblock %}
