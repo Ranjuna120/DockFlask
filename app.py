@@ -660,22 +660,23 @@ def ask_question():
     form = QuestionSubmissionForm()
     
     if form.validate_on_submit():
-        # Import here to avoid circular imports
-        import sqlite3
-        
         try:
-            # Connect to database and insert question
-            conn = sqlite3.connect('instance/dockflask.db')
-            cursor = conn.cursor()
+            # Import UserQuestion model
+            from user_question_model import UserQuestion
             
-            cursor.execute('''
-                INSERT INTO user_questions (name, email, subject, question, category, status, created_at)
-                VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
-            ''', (form.name.data, form.email.data, form.subject.data, 
-                  form.question.data, form.category.data))
+            # Create new question using SQLAlchemy
+            new_question = UserQuestion(
+                name=form.name.data,
+                email=form.email.data,
+                subject=form.subject.data,
+                question=form.question.data,
+                category=form.category.data,
+                status='pending'
+            )
             
-            conn.commit()
-            conn.close()
+            # Save to MySQL database
+            db.session.add(new_question)
+            db.session.commit()
             
             # Log the action
             log_action('question_submitted', f'Question submitted by {form.name.data}: {form.subject.data}')
@@ -685,6 +686,7 @@ def ask_question():
             
         except Exception as e:
             print(f"Error submitting question: {e}")
+            db.session.rollback()
             flash('There was an error submitting your question. Please try again.', 'danger')
     
     return render_template('ask_question.html', form=form)
@@ -696,65 +698,36 @@ def admin_questions():
         flash('Access denied. Admin privileges required.', 'danger')
         return redirect(url_for('dashboard'))
     
-    # Import here to avoid circular imports
-    import sqlite3
-    
     try:
-        conn = sqlite3.connect('instance/dockflask.db')
-        cursor = conn.cursor()
+        # Import UserQuestion model
+        from user_question_model import UserQuestion
         
         # Get filter parameters
         status_filter = request.args.get('status', 'all')
         category_filter = request.args.get('category', 'all')
         
-        # Build query
-        query = '''
-            SELECT id, name, email, subject, question, category, status, is_public, 
-                   answer, answered_by, answered_at, created_at
-            FROM user_questions
-            WHERE 1=1
-        '''
-        params = []
+        # Build query using SQLAlchemy
+        query = UserQuestion.query
         
         if status_filter != 'all':
-            query += ' AND status = ?'
-            params.append(status_filter)
+            query = query.filter(UserQuestion.status == status_filter)
             
         if category_filter != 'all':
-            query += ' AND category = ?'
-            params.append(category_filter)
+            query = query.filter(UserQuestion.category == category_filter)
             
-        query += ' ORDER BY created_at DESC'
-        
-        cursor.execute(query, params)
-        questions_data = cursor.fetchall()
+        # Get questions ordered by created_at descending
+        questions = query.order_by(UserQuestion.created_at.desc()).all()
         
         # Get statistics
-        cursor.execute('SELECT status, COUNT(*) FROM user_questions GROUP BY status')
-        stats = dict(cursor.fetchall())
+        from sqlalchemy import func
+        stats_query = db.session.query(UserQuestion.status, func.count(UserQuestion.id)).group_by(UserQuestion.status).all()
+        stats = dict(stats_query)
         
-        conn.close()
-        
-        # Format questions
-        questions = []
-        for row in questions_data:
-            questions.append({
-                'id': row[0],
-                'name': row[1],
-                'email': row[2],
-                'subject': row[3],
-                'question': row[4],
-                'category': row[5],
-                'status': row[6],
-                'is_public': bool(row[7]),
-                'answer': row[8],
-                'answered_by': row[9],
-                'answered_at': row[10],
-                'created_at': row[11]
-            })
+        # Convert questions to dictionaries
+        questions_data = [question.to_dict() for question in questions]
         
         return render_template('admin/questions.html', 
-                             questions=questions,
+                             questions=questions_data,
                              stats=stats,
                              status_filter=status_filter,
                              category_filter=category_filter)
@@ -779,38 +752,25 @@ def answer_question(question_id):
         if not answer:
             return jsonify({'success': False, 'message': 'Answer is required'}), 400
         
-        # Import here to avoid circular imports
-        import sqlite3
+        # Import UserQuestion model
+        from user_question_model import UserQuestion
         
-        conn = sqlite3.connect('instance/dockflask.db')
-        cursor = conn.cursor()
+        # Find the question using SQLAlchemy
+        question = UserQuestion.query.get(question_id)
+        
+        if not question:
+            return jsonify({'success': False, 'message': 'Question not found'}), 404
         
         # Update the question with answer
-        cursor.execute('''
-            UPDATE user_questions 
-            SET answer = ?, status = 'answered', is_public = ?, 
-                answered_by = ?, answered_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (answer, 1 if make_public else 0, current_user.id, question_id))
+        question.answer = answer
+        question.status = 'answered'
+        question.is_public = make_public
+        question.answered_by = current_user.id
+        question.answered_at = datetime.utcnow()
+        question.updated_at = datetime.utcnow()
         
-        # If make_public is True, also add to FAQ table
-        if make_public:
-            # Get the question details first
-            cursor.execute('SELECT subject, question, category FROM user_questions WHERE id = ?', (question_id,))
-            question_data = cursor.fetchone()
-            
-            if question_data:
-                subject, question_text, category = question_data
-                
-                # Add to FAQ table
-                cursor.execute('''
-                    INSERT INTO faqs (question, answer, category, is_active, created_at, updated_at)
-                    VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ''', (subject, answer, category))
-        
-        conn.commit()
-        conn.close()
+        # Save changes to database
+        db.session.commit()
         
         # Log the action
         log_action('question_answered', f'Answered question ID: {question_id}')
@@ -819,6 +779,7 @@ def answer_question(question_id):
         
     except Exception as e:
         print(f"Error answering question: {e}")
+        db.session.rollback()
         return jsonify({'success': False, 'message': 'Error answering question'}), 500
 
 @app.route('/api/questions/<int:question_id>/make-public', methods=['POST'])
@@ -909,29 +870,31 @@ def delete_question(question_id):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        import sqlite3
+        # Import UserQuestion model
+        from user_question_model import UserQuestion
         
-        conn = sqlite3.connect('instance/dockflask.db')
-        cursor = conn.cursor()
+        # Find the question using SQLAlchemy
+        question = UserQuestion.query.get(question_id)
         
-        # Get question details for logging before deletion
-        cursor.execute('SELECT subject, name FROM user_questions WHERE id = ?', (question_id,))
-        question_data = cursor.fetchone()
+        if not question:
+            return jsonify({'success': False, 'message': 'Question not found'}), 404
         
-        cursor.execute('DELETE FROM user_questions WHERE id = ?', (question_id,))
+        # Store question details for logging before deletion
+        subject = question.subject
+        name = question.name
         
-        conn.commit()
-        conn.close()
+        # Delete the question using SQLAlchemy
+        db.session.delete(question)
+        db.session.commit()
         
         # Log the action
-        if question_data:
-            subject, name = question_data
-            log_action('question_deleted', f'Deleted question "{subject}" by {name}')
+        log_action('question_deleted', f'Deleted question "{subject}" by {name}')
         
         return jsonify({'success': True, 'message': 'Question deleted successfully'})
         
     except Exception as e:
         print(f"Error deleting question: {e}")
+        db.session.rollback()
         return jsonify({'success': False, 'message': 'Error deleting question'}), 500
 
 @app.route('/api/questions/<int:question_id>', methods=['GET'])
